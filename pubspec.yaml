@@ -1,0 +1,49 @@
+name: soap_lite
+description: Cliente SOAP desktop cross-platform leve, rápido e moderno.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI e Layout
+  multi_split_view: ^3.0.0
+  
+  # Tema e Persistência
+  shared_preferences: ^2.2.2
+  
+  # Parser XML
+  xml: ^6.5.0
+  
+  # HTTP Client
+  http: ^1.2.0
+  
+  # Ícones
+  flutter_svg: ^2.0.9
+  
+  # Utilitários
+  path_provider: ^2.1.2
+  collection: ^1.18.0
+  provider: ^6.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/themes/
+  
+  fonts:
+    - family: RobotoMono
+      fonts:
+        - asset: fonts/RobotoMono-Regular.ttf
+        - asset: fonts/RobotoMono-Bold.ttf
+          weight: 700
