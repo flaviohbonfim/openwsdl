@@ -116,3 +116,7 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+
+# Plans
+plans
