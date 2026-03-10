@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
   
   # UI e Layout
-  multi_split_view: ^3.0.0
+  # multi_split_view: ^3.0.0  # Não necessário - implementamos splitter manual
   
   # Tema e Persistência
   shared_preferences: ^2.2.2

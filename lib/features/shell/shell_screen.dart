@@ -22,6 +22,8 @@ class ShellScreen extends StatefulWidget {
 class _ShellScreenState extends State<ShellScreen> {
   int _selectedNavIndex = 0;
   bool _isSidebarVisible = true;
+  double _sidebarWidth = 250;
+  bool _isResizing = false;
   
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,39 @@ class _ShellScreenState extends State<ShellScreen> {
           ),
           
           // Explorer Sidebar (visível apenas no índice 0)
-          ExplorerSidebar(isVisible: _isSidebarVisible),
+          if (_isSidebarVisible) ...[
+            ExplorerSidebar(
+              isVisible: _isSidebarVisible,
+              width: _sidebarWidth,
+            ),
+            // Divisor redimensionável
+            MouseRegion(
+              cursor: SystemMouseCursors.resizeLeftRight,
+              child: GestureDetector(
+                onHorizontalDragStart: (details) {
+                  setState(() => _isResizing = true);
+                },
+                onHorizontalDragUpdate: (details) {
+                  setState(() {
+                    _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(150.0, 400.0);
+                  });
+                },
+                onHorizontalDragEnd: (details) {
+                  setState(() => _isResizing = false);
+                },
+                child: Container(
+                  width: 4,
+                  color: _isResizing 
+                      ? Theme.of(context).colorScheme.primary 
+                      : Colors.transparent,
+                  child: Container(
+                    width: 1,
+                    color: Theme.of(context).dividerColor,
+                  ),
+                ),
+              ),
+            ),
+          ],
           
           // Área Principal (Editor + Status Bar)
           Expanded(

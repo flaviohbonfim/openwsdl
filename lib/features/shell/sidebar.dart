@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 /// Exibe a árvore hierárquica: Projeto → Serviço → Binding → Operação
 class ExplorerSidebar extends StatelessWidget {
   final bool isVisible;
+  final double width;
   
   const ExplorerSidebar({
     super.key,
     required this.isVisible,
+    this.width = 250,
   });
   
   @override
@@ -19,7 +21,7 @@ class ExplorerSidebar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
-      width: 250,
+      width: width,
       constraints: const BoxConstraints(minWidth: 150, maxWidth: 400),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF252526) : Colors.grey[100],

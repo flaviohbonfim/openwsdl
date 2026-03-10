@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../config/theme/theme_provider.dart';
 
 /// Barra de navegação lateral estilo VS Code
 /// Contém ícones de acesso rápido para diferentes funcionalidades
@@ -15,6 +17,7 @@ class AppNavigationRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = context.watch<ThemeProvider>();
     
     return NavigationRail(
       selectedIndex: selectedIndex,
@@ -41,6 +44,17 @@ class AppNavigationRail extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Botão de Toggle de Tema
+              IconButton(
+                icon: Icon(
+                  themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                ),
+                onPressed: () {
+                  themeProvider.toggleTheme();
+                },
+                tooltip: themeProvider.isDarkMode ? 'Tema Claro' : 'Tema Escuro',
+              ),
+              const SizedBox(height: 8),
               // Botão de Configurações
               IconButton(
                 icon: const Icon(Icons.settings),

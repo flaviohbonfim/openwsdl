@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeProvider extends ChangeNotifier {
   static const String _themeKey = 'app_theme';
   
-  ThemeMode _themeMode = ThemeMode.system;
+  static ThemeMode _savedThemeMode = ThemeMode.system;
+  
+  ThemeMode _themeMode = _savedThemeMode;
   
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
@@ -14,7 +16,11 @@ class ThemeProvider extends ChangeNotifier {
   static Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
     final themeIndex = prefs.getInt(_themeKey) ?? ThemeMode.system.index;
-    // Inicialização será feita no construtor
+    _savedThemeMode = ThemeMode.values[themeIndex];
+  }
+  
+  ThemeProvider() {
+    _themeMode = _savedThemeMode;
   }
   
   Future<void> toggleTheme() async {
