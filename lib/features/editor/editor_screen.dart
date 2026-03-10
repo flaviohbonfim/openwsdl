@@ -5,6 +5,7 @@ import 'controller/tab_editor_state.dart';
 import 'widgets/app_tab_bar.dart';
 import 'widgets/monaco_editor.dart';
 import 'widgets/editor_toolbar.dart';
+import '../environment/controller/environment_provider.dart';
 import '../response/widgets/response_panel.dart';
 import 'package:flutter/services.dart';
 
@@ -39,8 +40,10 @@ class _EditorScreenState extends State<EditorScreen> {
         },
         const SingleActivator(LogicalKeyboardKey.keyF, shift: true, alt: true):
             () => _editorKey.currentState?.format(),
-        const SingleActivator(LogicalKeyboardKey.enter, control: true): () =>
-            tabManager.executeSoapRequest(),
+        const SingleActivator(LogicalKeyboardKey.enter, control: true): () {
+          final envProvider = context.read<EnvironmentProvider>();
+          tabManager.executeSoapRequest(envProvider.getActiveVariables());
+        },
       },
       child: Focus(
         autofocus: true,
@@ -67,7 +70,10 @@ class _EditorScreenState extends State<EditorScreen> {
                   _editorKey.currentState?.setValue(data!.text!);
                 }
               },
-              onSend: () => tabManager.executeSoapRequest(),
+              onSend: () {
+                final envProvider = context.read<EnvironmentProvider>();
+                tabManager.executeSoapRequest(envProvider.getActiveVariables());
+              },
               onToggleLayout: tabManager.toggleLayout,
               isExecuting: activeTab?.isExecuting ?? false,
               isVerticalLayout: tabManager.isVerticalSplit,

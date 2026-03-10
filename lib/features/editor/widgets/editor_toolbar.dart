@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../controller/tab_manager.dart';
+import '../../environment/widgets/environment_selector.dart';
 
 class EditorToolbar extends StatelessWidget {
   final VoidCallback? onFormat;
@@ -68,6 +67,8 @@ class EditorToolbar extends StatelessWidget {
             onPressed: onToggleLayout,
           ),
           const Spacer(),
+          const EnvironmentSelector(),
+          const SizedBox(width: 8),
           // Botão de "Enviar" (Fase 4)
           SizedBox(
             height: 24,

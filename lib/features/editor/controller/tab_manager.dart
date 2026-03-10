@@ -3,6 +3,7 @@ import '../../http_client/services/soap_http_client.dart';
 import '../../http_client/models/soap_response.dart';
 import 'package:soap_lite/core/utils/xml_utils.dart';
 import 'tab_editor_state.dart';
+import '../../environment/services/variable_interpolator.dart';
 
 /// Gerenciador de abas do editor
 class TabManager extends ChangeNotifier {
@@ -89,14 +90,23 @@ class TabManager extends ChangeNotifier {
   }
 
   /// Executa a requisição SOAP da aba ativa
-  Future<void> executeSoapRequest() async {
+  Future<void> executeSoapRequest([Map<String, String> variables = const {}]) async {
     final tab = activeTab;
     if (tab == null || tab.endpoint == null) return;
 
+    // Aplicar Interpolação (Fase 5)
+    final interpolatedEndpoint = VariableInterpolator.interpolate(tab.endpoint!, variables);
+    final interpolatedBody = VariableInterpolator.interpolate(tab.content, variables);
+    
+    final Map<String, String> interpolatedHeaders = {};
+    tab.customHeaders.forEach((key, value) {
+      interpolatedHeaders[key] = VariableInterpolator.interpolate(value, variables);
+    });
+
     // Validação básica de XML (Fase 4.3)
-    if (!XmlUtils.isValidXml(tab.content)) {
+    if (!XmlUtils.isValidXml(interpolatedBody)) {
       tab.lastResponse =
-          SoapResponse.error('XML Inválido ou Malformado', Duration.zero);
+          SoapResponse.error('XML Inválido ou Malformado após interpolação', Duration.zero);
       notifyListeners();
       return;
     }
@@ -107,10 +117,10 @@ class TabManager extends ChangeNotifier {
 
     try {
       final response = await _client.send(
-        endpoint: tab.endpoint!,
-        xmlBody: tab.content,
+        endpoint: interpolatedEndpoint,
+        xmlBody: interpolatedBody,
         soapAction: tab.soapAction,
-        customHeaders: tab.customHeaders,
+        customHeaders: interpolatedHeaders,
       );
       tab.lastResponse = response;
     } finally {
