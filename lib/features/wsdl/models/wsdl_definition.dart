@@ -24,12 +24,14 @@ class WsdlDefinition {
   final List<WsdlService> services;
   final String sourceUrl;
   final String? version;
+  bool isLoaded;
 
   WsdlDefinition({
     required this.sourceUrl,
     this.targetNamespace,
     this.services = const [],
     this.version,
+    this.isLoaded = false,
   });
 
   @override

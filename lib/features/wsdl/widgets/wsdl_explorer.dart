@@ -18,13 +18,25 @@ class WsdlExplorer extends StatelessWidget {
       return _buildEmptyState(context);
     }
 
-    return ListView.builder(
-      itemCount: definitions.length,
-      padding: EdgeInsets.zero,
-      itemBuilder: (context, index) {
-        final wsdl = definitions[index];
-        return _buildWsdlNode(context, wsdl);
-      },
+    return Column(
+      children: [
+        if (wsdlProvider.isLoading)
+          const LinearProgressIndicator(
+            minHeight: 2,
+            backgroundColor: Colors.transparent,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+          ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: definitions.length,
+            padding: EdgeInsets.zero,
+            itemBuilder: (context, index) {
+              final wsdl = definitions[index];
+              return _buildWsdlNode(context, wsdl, wsdlProvider);
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -53,7 +65,32 @@ class WsdlExplorer extends StatelessWidget {
     );
   }
 
-  Widget _buildWsdlNode(BuildContext context, WsdlDefinition wsdl) {
+  Widget _buildWsdlNode(
+      BuildContext context, WsdlDefinition wsdl, WsdlProvider provider) {
+    if (!wsdl.isLoaded) {
+      return GestureDetector(
+        onDoubleTap: () => provider.loadWsdl(wsdl),
+        child: ListTile(
+          leading:
+              const Icon(Icons.cloud_download, size: 18, color: Colors.grey),
+          title: Text(
+            wsdl.sourceUrl.split('/').last,
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: const Text(
+            'Clique duas vezes para carregar',
+            style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+            onPressed: () => provider.removeWsdl(wsdl),
+            tooltip: 'Remover WSDL',
+          ),
+        ),
+      );
+    }
+
     return ExpansionTile(
       leading: const Icon(Icons.description, size: 18, color: Colors.orange),
       title: Text(
@@ -65,6 +102,17 @@ class WsdlExplorer extends StatelessWidget {
         wsdl.targetNamespace ?? '',
         style: const TextStyle(fontSize: 10),
         overflow: TextOverflow.ellipsis,
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+            onPressed: () => provider.removeWsdl(wsdl),
+            tooltip: 'Remover WSDL',
+          ),
+          const Icon(Icons.expand_more, size: 18),
+        ],
       ),
       children: wsdl.services
           .map((service) => _buildServiceNode(context, service))
@@ -112,11 +160,12 @@ class WsdlExplorer extends StatelessWidget {
   }
 
   void _handleOperationSelected(BuildContext context, SoapOperation op) {
-    // TODO: Integrar com TabManager para abrir aba com template
     final tabManager = context.read<TabManager>();
     tabManager.addTab(
       title: op.name,
       content: SoapTemplateGenerator.generate(op),
+      endpoint: op.endpoint,
+      soapAction: op.soapAction,
     );
   }
 }

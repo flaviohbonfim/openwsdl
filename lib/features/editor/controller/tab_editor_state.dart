@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../http_client/models/soap_response.dart';
 
 /// Representa o estado de uma aba no editor (Renomeado para evitar conflito com flutter_monaco)
 class TabEditorState {
@@ -8,12 +9,24 @@ class TabEditorState {
   bool isModified;
   String? language; // Mantemos como string no modelo e convertemos no widget
 
+  // Atributos de execução (Fase 4)
+  String? endpoint;
+  String? soapAction;
+  Map<String, String> customHeaders;
+  SoapResponse? lastResponse;
+  bool isExecuting;
+
   TabEditorState({
     required this.id,
     this.title = 'Sem Título',
     this.content = '',
     this.isModified = false,
     this.language = 'xml',
+    this.endpoint,
+    this.soapAction,
+    this.customHeaders = const {},
+    this.lastResponse,
+    this.isExecuting = false,
   });
 
   TabEditorState copyWith({
@@ -22,6 +35,11 @@ class TabEditorState {
     String? content,
     bool? isModified,
     String? language,
+    String? endpoint,
+    String? soapAction,
+    Map<String, String>? customHeaders,
+    SoapResponse? lastResponse,
+    bool? isExecuting,
   }) {
     return TabEditorState(
       id: id ?? this.id,
@@ -29,6 +47,11 @@ class TabEditorState {
       content: content ?? this.content,
       isModified: isModified ?? this.isModified,
       language: language ?? this.language,
+      endpoint: endpoint ?? this.endpoint,
+      soapAction: soapAction ?? this.soapAction,
+      customHeaders: customHeaders ?? this.customHeaders,
+      lastResponse: lastResponse ?? this.lastResponse,
+      isExecuting: isExecuting ?? this.isExecuting,
     );
   }
 }

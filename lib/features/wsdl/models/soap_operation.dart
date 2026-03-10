@@ -5,6 +5,7 @@ class SoapOperation {
   final String? targetNamespace;
   final List<SoapParameter> parameters;
   final String? documentation;
+  final Map<String, String> namespaces; // URI -> Prefix
 
   SoapOperation({
     required this.name,
@@ -13,6 +14,7 @@ class SoapOperation {
     this.targetNamespace,
     this.parameters = const [],
     this.documentation,
+    this.namespaces = const {},
   });
 
   @override
@@ -25,6 +27,7 @@ class SoapParameter {
   final bool isComplex;
   final List<SoapParameter> children;
   final String? namespace;
+  final String? preferredPrefix;
 
   SoapParameter({
     required this.name,
@@ -32,5 +35,6 @@ class SoapParameter {
     this.isComplex = false,
     this.children = const [],
     this.namespace,
+    this.preferredPrefix,
   });
 }

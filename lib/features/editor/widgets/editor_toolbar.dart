@@ -6,12 +6,20 @@ class EditorToolbar extends StatelessWidget {
   final VoidCallback? onFormat;
   final VoidCallback? onCopy;
   final VoidCallback? onPaste;
+  final VoidCallback? onSend;
+  final VoidCallback? onToggleLayout;
+  final bool isExecuting;
+  final bool isVerticalLayout;
 
   const EditorToolbar({
     super.key,
     this.onFormat,
     this.onCopy,
     this.onPaste,
+    this.onSend,
+    this.onToggleLayout,
+    this.isExecuting = false,
+    this.isVerticalLayout = true,
   });
 
   @override
@@ -49,21 +57,38 @@ class EditorToolbar extends StatelessWidget {
             tooltip: 'Colar',
             onPressed: onPaste,
           ),
+          const VerticalDivider(width: 16, indent: 8, endIndent: 8),
+          _ToolbarButton(
+            icon: isVerticalLayout
+                ? Icons.horizontal_split_outlined
+                : Icons.vertical_split_outlined,
+            tooltip: isVerticalLayout
+                ? 'Layout Horizontal (Resposta abaixo)'
+                : 'Layout Vertical (Resposta ao lado)',
+            onPressed: onToggleLayout,
+          ),
           const Spacer(),
-          // Placeholder para o botão de "Enviar" que virá na Fase 4
-          FilledButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Executar Requisição (Fase 4)')),
-              );
-            },
-            icon: const Icon(Icons.play_arrow_rounded, size: 16),
-            label: const Text('Enviar', style: TextStyle(fontSize: 12)),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              minimumSize: const Size(0, 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+          // Botão de "Enviar" (Fase 4)
+          SizedBox(
+            height: 24,
+            child: FilledButton.icon(
+              onPressed: isExecuting ? null : onSend,
+              icon: isExecuting
+                  ? const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.play_arrow_rounded, size: 16),
+              label: Text(isExecuting ? 'Enviando...' : 'Enviar',
+                  style: const TextStyle(fontSize: 12)),
+              style: FilledButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                minimumSize: const Size(0, 24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ),
           ),

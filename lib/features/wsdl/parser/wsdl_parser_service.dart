@@ -15,10 +15,10 @@ class WsdlParserService {
       throw Exception('Falha ao baixar WSDL de $url: ${response.statusCode}');
     }
 
-    return parse(response.body, url);
+    return await parse(response.body, url);
   }
 
-  WsdlDefinition parse(String xmlContent, String sourceUrl) {
+  Future<WsdlDefinition> parse(String xmlContent, String sourceUrl) async {
     try {
       final document = XmlDocument.parse(xmlContent);
       final definitions = document.getElement('wsdl:definitions') ??
@@ -29,18 +29,28 @@ class WsdlParserService {
       }
 
       final targetNamespace = definitions.getAttribute('targetNamespace');
-      final services = <WsdlService>[];
 
+      // Coleta esquemas locais e recursivos (imports)
+      final schemas = await _extractAllSchemas(definitions, sourceUrl);
+      final namespaces = _extractNamespaces(definitions, schemas);
+
+      final services = <WsdlService>[];
       final serviceElements = definitions.findElements('wsdl:service');
+
+      final context = _ParserContext(
+        definitions: definitions,
+        schemas: schemas,
+        namespaces: namespaces,
+      );
+
       if (serviceElements.isEmpty) {
-        // Tenta sem o prefixo wsdl
         final alternateServices = definitions.findElements('service');
         for (var serviceEl in alternateServices) {
-          services.add(_parseService(definitions, serviceEl));
+          services.add(_parseService(context, serviceEl));
         }
       } else {
         for (var serviceEl in serviceElements) {
-          services.add(_parseService(definitions, serviceEl));
+          services.add(_parseService(context, serviceEl));
         }
       }
 
@@ -55,7 +65,114 @@ class WsdlParserService {
     }
   }
 
-  WsdlService _parseService(XmlElement definitions, XmlElement serviceEl) {
+  Map<String, String> _extractNamespaces(
+      XmlElement definitions, List<XmlElement> schemas) {
+    final map = <String, String>{};
+
+    // 1. Prefixos do WSDL root
+    for (var attr in definitions.attributes) {
+      if (attr.name.prefix == 'xmlns') {
+        map[attr.value] = attr.name.local;
+      } else if (attr.name.local == 'xmlns') {
+        map[attr.value] = ''; // Default namespace
+      }
+    }
+
+    // 2. Garante prefixos para todos os targetNamespaces dos esquemas
+    int nsCounter = 1;
+    for (var schema in schemas) {
+      final tns = schema.getAttribute('targetNamespace');
+      if (tns != null && !map.containsKey(tns)) {
+        // Tenta encontrar um prefixo já definido no próprio esquema
+        String? existingPrefix;
+        for (var attr in schema.attributes) {
+          if (attr.name.prefix == 'xmlns' && attr.value == tns) {
+            existingPrefix = attr.name.local;
+            break;
+          }
+        }
+
+        if (existingPrefix != null && !map.containsValue(existingPrefix)) {
+          map[tns] = existingPrefix;
+        } else {
+          // Gera um novo prefixo
+          String newPrefix;
+          do {
+            newPrefix = 'ns$nsCounter';
+            nsCounter++;
+          } while (map.containsValue(newPrefix));
+          map[tns] = newPrefix;
+        }
+      }
+    }
+
+    return map;
+  }
+
+  Future<List<XmlElement>> _extractAllSchemas(
+      XmlElement definitions, String baseUrl) async {
+    final types = definitions.findElements('wsdl:types').firstOrNull ??
+        definitions.findElements('types').firstOrNull;
+    if (types == null) return [];
+
+    // Busca todos os elementos que terminam com 'schema' (ex: xsd:schema, xs:schema, schema)
+    final localSchemas = types.children
+        .whereType<XmlElement>()
+        .where((el) => el.localName == 'schema')
+        .toList();
+
+    final allSchemas = <XmlElement>[...localSchemas];
+    final processedUrls = <String>{baseUrl};
+
+    // Busca imports nos esquemas locais
+    for (var schema in localSchemas) {
+      await _resolveImports(schema, baseUrl, allSchemas, processedUrls);
+    }
+
+    return allSchemas;
+  }
+
+  Future<void> _resolveImports(XmlElement schema, String baseUrl,
+      List<XmlElement> allSchemas, Set<String> processedUrls) async {
+    // Busca imports com qualquer prefixo
+    final imports = schema.children
+        .whereType<XmlElement>()
+        .where((el) => el.localName == 'import')
+        .toList();
+
+    for (var imp in imports) {
+      final schemaLocation = imp.getAttribute('schemaLocation');
+      if (schemaLocation == null) continue;
+
+      // Resolve URL absoluta
+      String absoluteUrl = schemaLocation;
+      if (!schemaLocation.startsWith('http')) {
+        final uri = Uri.parse(baseUrl);
+        absoluteUrl = uri.resolve(schemaLocation).toString();
+      }
+
+      if (processedUrls.contains(absoluteUrl)) continue;
+      processedUrls.add(absoluteUrl);
+
+      try {
+        print('Baixando esquema importado: $absoluteUrl');
+        final response = await _client.get(Uri.parse(absoluteUrl));
+        if (response.statusCode == 200) {
+          final doc = XmlDocument.parse(response.body);
+          final root = doc.rootElement;
+          if (root.localName == 'schema') {
+            allSchemas.add(root);
+            // Recursão para buscar imports do esquema importado
+            await _resolveImports(root, absoluteUrl, allSchemas, processedUrls);
+          }
+        }
+      } catch (e) {
+        print('Erro ao processar import $absoluteUrl: $e');
+      }
+    }
+  }
+
+  WsdlService _parseService(_ParserContext context, XmlElement serviceEl) {
     final name = serviceEl.getAttribute('name') ?? 'Serviço sem nome';
     final ports = <WsdlPort>[];
 
@@ -63,23 +180,22 @@ class WsdlParserService {
     if (portElements.isEmpty) {
       final alternatePorts = serviceEl.findElements('port');
       for (var portEl in alternatePorts) {
-        ports.add(_parsePort(definitions, portEl));
+        ports.add(_parsePort(context, portEl));
       }
     } else {
       for (var portEl in portElements) {
-        ports.add(_parsePort(definitions, portEl));
+        ports.add(_parsePort(context, portEl));
       }
     }
 
     return WsdlService(name: name, ports: ports);
   }
 
-  WsdlPort _parsePort(XmlElement definitions, XmlElement portEl) {
+  WsdlPort _parsePort(_ParserContext context, XmlElement portEl) {
     final name = portEl.getAttribute('name') ?? 'Porta sem nome';
     final bindingQualifiedName = portEl.getAttribute('binding');
     final bindingName = bindingQualifiedName?.split(':').last;
 
-    // Address (endpoint)
     String endpoint = '';
     final addressEl = portEl.findElements('soap:address').firstOrNull ??
         portEl.findElements('soap12:address').firstOrNull ??
@@ -89,27 +205,27 @@ class WsdlParserService {
       endpoint = addressEl.getAttribute('location') ?? '';
     }
 
-    // Se houver um binding, podemos encontrar as operações associadas
     List<SoapOperation> operations = [];
     if (bindingName != null) {
-      operations = _findOperationsInBinding(definitions, bindingName, endpoint);
+      operations = _findOperationsInBinding(context, bindingName, endpoint);
     }
 
     return WsdlPort(name: name, endpoint: endpoint, operations: operations);
   }
 
   List<SoapOperation> _findOperationsInBinding(
-      XmlElement definitions, String bindingName, String endpoint) {
+      _ParserContext context, String bindingName, String endpoint) {
     final operations = <SoapOperation>[];
-    final mapper = XsdMapper(definitions);
+    final mapper =
+        XsdMapper(context.definitions, context.schemas, context.namespaces);
 
-    final bindings = definitions.findElements('wsdl:binding');
+    final bindings = context.definitions.findElements('wsdl:binding');
     final targetBinding =
         bindings.firstWhereOrNull((b) => b.getAttribute('name') == bindingName);
 
     if (targetBinding != null) {
       final portTypeName = targetBinding.getAttribute('type')?.split(':').last;
-      final portTypes = definitions.findElements('wsdl:portType');
+      final portTypes = context.definitions.findElements('wsdl:portType');
       final targetPortType = portTypes
           .firstWhereOrNull((p) => p.getAttribute('name') == portTypeName);
 
@@ -123,22 +239,43 @@ class WsdlParserService {
 
         final soapAction = soapOpEl?.getAttribute('soapAction');
 
-        // Busca a entrada nos portTypes
         final portTypeOperation = targetPortType
             ?.findElements('wsdl:operation')
             .firstWhereOrNull((o) => o.getAttribute('name') == opName);
 
-        final inputMessageName = portTypeOperation
+        final inputMessageRef = portTypeOperation
             ?.findElements('wsdl:input')
             .firstOrNull
-            ?.getAttribute('message')
-            ?.split(':')
-            .last;
+            ?.getAttribute('message');
 
+        final inputMessageName = inputMessageRef?.split(':').last;
+
+        String? operationTargetNamespace;
         List<SoapParameter> parameters = [];
+
         if (inputMessageName != null) {
           try {
             parameters = mapper.getParametersForMessage(inputMessageName);
+
+            // Tenta descobrir o namespace da própria operação (o elemento raiz no Body)
+            final message = context.definitions
+                .findElements('wsdl:message')
+                .firstWhereOrNull(
+                    (m) => m.getAttribute('name') == inputMessageName);
+            if (message != null) {
+              final part = message.findElements('wsdl:part').firstOrNull;
+              final elementAttr = part?.getAttribute('element');
+              if (elementAttr != null) {
+                final parts = elementAttr.split(':');
+                if (parts.length > 1) {
+                  operationTargetNamespace =
+                      context.definitions.getAttribute('xmlns:${parts.first}');
+                } else {
+                  operationTargetNamespace =
+                      context.definitions.getAttribute('xmlns');
+                }
+              }
+            }
           } catch (e) {
             print('Erro ao obter parâmetros para operação $opName: $e');
           }
@@ -149,10 +286,24 @@ class WsdlParserService {
           soapAction: soapAction,
           endpoint: endpoint,
           parameters: parameters,
+          namespaces: context.namespaces,
+          targetNamespace: operationTargetNamespace,
         ));
       }
     }
 
     return operations;
   }
+}
+
+class _ParserContext {
+  final XmlElement definitions;
+  final List<XmlElement> schemas;
+  final Map<String, String> namespaces;
+
+  _ParserContext({
+    required this.definitions,
+    required this.schemas,
+    required this.namespaces,
+  });
 }
