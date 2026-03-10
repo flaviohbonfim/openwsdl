@@ -11,13 +11,13 @@ Criar uma alternativa moderna ao SoapUI, combinando:
 
 ## 🚀 Status do Projeto
 
-**Fase 1: Fundação e Shell Visual** - Em planejamento
+**Fase 1: Fundação e Shell Visual** - 🟦 Em desenvolvimento
 
 ## 📋 Roadmap
 
 | Fase | Período | Status |
 |------|---------|--------|
-| 1. Fundação e Shell Visual | Semana 1-2 | 📋 Pendente |
+| 1. Fundação e Shell Visual | Semana 1-2 | 🟦 Em andamento |
 | 2. Editor de Código e Gestão de Abas | Semana 3-4 | ⏳ Aguardando |
 | 3. Motor de Parsing WSDL/XSD | Semana 5-7 | ⏳ Aguardando |
 | 4. Cliente HTTP e Ciclo de Resposta | Semana 8-9 | ⏳ Aguardando |
@@ -34,6 +34,37 @@ Criar uma alternativa moderna ao SoapUI, combinando:
 | **Parser XML** | Pacote `xml` |
 | **HTTP Client** | Pacote `http` |
 | **Persistência** | JSON local + `shared_preferences` |
+
+## 🏃 Como Rodar
+
+### Pré-requisitos
+- Flutter SDK 3.6+
+- Visual Studio 2022 (Windows) com workload de C++
+- Git
+
+### Passos
+
+1. Clone o repositório:
+```bash
+git clone <url-do-repositorio>
+cd openwsdl
+```
+
+2. Instale as dependências:
+```bash
+flutter pub get
+```
+
+3. Execute para Windows:
+```bash
+flutter run -d windows
+```
+
+4. Ou execute para outras plataformas:
+```bash
+flutter run -d macos    # macOS
+flutter run -d linux    # Linux
+```
 
 ## 📦 Estrutura do Projeto
 

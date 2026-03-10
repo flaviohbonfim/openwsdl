@@ -127,6 +127,10 @@ lib/config/theme/
 lib/config/theme/theme_provider.dart  ✅
 ```
 
+**Correções de Build:**
+- ✅ Corrigido `NavigationRailThemeData`: substituído `selectedItemColor` por `selectedIconTheme` e `selectedLabelTextStyle`
+- ✅ Corrigido ícone `Icons.cloud_outline` para `Icons.cloud_outlined`
+
 ---
 
 ### 1.5 Integrar Provider para Gerenciamento de Estado
