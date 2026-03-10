@@ -28,7 +28,7 @@ class StatusBar extends StatelessWidget {
           // Status do SOAP
           _buildStatusItem(
             context,
-            icon: Icons.cloud_outline,
+            icon: Icons.cloud_outlined,
             label: 'Pronto',
           ),
           

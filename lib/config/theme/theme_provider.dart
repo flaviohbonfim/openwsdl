@@ -53,10 +53,12 @@ class ThemeProvider extends ChangeNotifier {
         foregroundColor: Colors.black87,
         elevation: 0,
       ),
-      navigationRailTheme: const NavigationRailThemeData(
+      navigationRailTheme: NavigationRailThemeData(
         backgroundColor: Colors.grey[100],
-        selectedItemColor: Colors.blue[900],
-        unselectedItemColor: Colors.grey,
+        selectedIconTheme: IconThemeData(color: Colors.blue[900], size: 24),
+        unselectedIconTheme: const IconThemeData(color: Colors.grey, size: 24),
+        selectedLabelTextStyle: TextStyle(color: Colors.blue[900], fontWeight: FontWeight.bold),
+        unselectedLabelTextStyle: const TextStyle(color: Colors.grey),
       ),
       dividerColor: Colors.grey[300],
     );
@@ -80,10 +82,12 @@ class ThemeProvider extends ChangeNotifier {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      navigationRailTheme: const NavigationRailThemeData(
-        backgroundColor: Color(0xFF252526),
-        selectedItemColor: Colors.blue[400],
-        unselectedItemColor: Colors.grey,
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: const Color(0xFF252526),
+        selectedIconTheme: const IconThemeData(color: Colors.blue, size: 24),
+        unselectedIconTheme: const IconThemeData(color: Colors.grey, size: 24),
+        selectedLabelTextStyle: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+        unselectedLabelTextStyle: const TextStyle(color: Colors.grey),
       ),
       dividerColor: Colors.grey[800],
     );
