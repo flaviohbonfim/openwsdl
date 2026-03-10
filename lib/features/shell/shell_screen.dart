@@ -102,37 +102,6 @@ class _ShellScreenState extends State<ShellScreen> {
   }
   
   Widget _buildEditorArea() {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.code,
-              size: 64,
-              color: Colors.grey,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'SOAP-Lite',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Importe um WSDL para começar',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const EditorScreen();
   }
 }

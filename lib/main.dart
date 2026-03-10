@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app.dart';
 import 'config/theme/theme_provider.dart';
+import 'features/editor/controller/tab_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,8 +11,11 @@ void main() async {
   await ThemeProvider.initialize();
   
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => TabManager()..initIfEmpty()),
+      ],
       child: const SoapLiteApp(),
     ),
   );
