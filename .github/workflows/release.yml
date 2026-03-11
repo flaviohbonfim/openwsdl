@@ -50,7 +50,7 @@ jobs:
           mkdir dist
           cd build/macos/Build/Products/Release
           codesign --force --deep -s - OpenWsdl.app
-          zip -r ../../../../../dist/openwsdl-macos.zip OpenWsdl.app
+          zip -ry ../../../../../dist/openwsdl-macos.zip OpenWsdl.app
 
       - name: Build Linux
         if: matrix.target == 'linux'
