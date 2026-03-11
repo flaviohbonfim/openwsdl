@@ -41,7 +41,22 @@ Criar uma alternativa moderna ao SoapUI, combinando:
 | **HTTP Client**      | Pacote `http`                     |
 | **Persistência**     | JSON local + `shared_preferences` |
 
-## 🏃 Como Rodar
+## 📦 Downloads e Instalação
+
+Você pode baixar a versão oficial na página de **[Releases](https://github.com/flaviohbonfim/openwsdl/releases)**.
+
+### 🍎 Nota para usuários macOS
+Como o OpenWsdl é um projeto de código aberto e não possui uma assinatura paga da Apple, o macOS exibirá um aviso de "Desenvolvedor Não Identificado" ao abrir pela primeira vez.
+
+**Como resolver:**
+1. Clique com o **botão direito** no aplicativo `OpenWsdl`.
+2. Selecione **Abrir**.
+3. Na janela de aviso, clique em **Abrir** novamente.
+4. O app será registrado como seguro e abrirá normalmente nas próximas vezes.
+
+---
+
+## 🏃 Como Rodar (Desenvolvedores)
 
 ### Pré-requisitos
 

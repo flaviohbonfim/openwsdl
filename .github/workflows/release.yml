@@ -49,6 +49,7 @@ jobs:
           flutter build macos --release
           mkdir dist
           cd build/macos/Build/Products/Release
+          codesign --force --deep -s - OpenWsdl.app
           zip -r ../../../../../dist/openwsdl-macos.zip OpenWsdl.app
 
       - name: Build Linux
