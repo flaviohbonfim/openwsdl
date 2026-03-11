@@ -10,12 +10,15 @@ import '../editor/editor_screen.dart';
 /// Tela principal da aplicação (Shell)
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
+
+  /// Permite acesso ao state para disparar toggles de fora
+  static final GlobalKey<ShellScreenState> globalKey = GlobalKey<ShellScreenState>();
   
   @override
-  State<ShellScreen> createState() => _ShellScreenState();
+  State<ShellScreen> createState() => ShellScreenState();
 }
 
-class _ShellScreenState extends State<ShellScreen> {
+class ShellScreenState extends State<ShellScreen> {
   final GlobalKey<EditorScreenState> _editorScreenKey = GlobalKey<EditorScreenState>();
   int _selectedNavIndex = 0;
   bool _isSidebarVisible = false;
@@ -45,7 +48,7 @@ class _ShellScreenState extends State<ShellScreen> {
     
     // Ctrl + B (Toggle Sidebar)
     if (isControl && event.logicalKey == LogicalKeyboardKey.keyB) {
-      setState(() => _isSidebarVisible = !_isSidebarVisible);
+      toggleSidebar();
       return true;
     }
 
@@ -89,6 +92,10 @@ class _ShellScreenState extends State<ShellScreen> {
     }
 
     return false;
+  }
+  
+  void toggleSidebar() {
+    setState(() => _isSidebarVisible = !_isSidebarVisible);
   }
   
   @override

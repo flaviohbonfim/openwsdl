@@ -13,12 +13,20 @@ class MonacoEditorWidget extends StatefulWidget {
   final TabEditorState tab;
   final VoidCallback? onSave;
   final VoidCallback? onExecuteRequest;
+  final VoidCallback? onNewTab;
+  final VoidCallback? onCloseTab;
+  final VoidCallback? onToggleTheme;
+  final VoidCallback? onToggleSidebar;
 
   const MonacoEditorWidget({
     super.key,
     required this.tab,
     this.onSave,
     this.onExecuteRequest,
+    this.onNewTab,
+    this.onCloseTab,
+    this.onToggleTheme,
+    this.onToggleSidebar,
   });
 
   @override
@@ -130,6 +138,14 @@ class MonacoEditorWidgetState extends State<MonacoEditorWidget> {
             widget.onSave?.call();
           } else if (range.startColumn == 2) {
             widget.onExecuteRequest?.call();
+          } else if (range.startColumn == 3) {
+            widget.onNewTab?.call();
+          } else if (range.startColumn == 4) {
+            widget.onCloseTab?.call();
+          } else if (range.startColumn == 5) {
+            widget.onToggleTheme?.call();
+          } else if (range.startColumn == 6) {
+            widget.onToggleSidebar?.call();
           }
           return;
         }
@@ -149,10 +165,18 @@ class MonacoEditorWidgetState extends State<MonacoEditorWidget> {
         <script>
           document.addEventListener('keydown', function(e) {
             let action = null;
-            if (e.ctrlKey && e.key.toLowerCase() === 's') {
-              action = 1;
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+              action = 5; // Toggle theme
+            } else if (e.ctrlKey && e.key.toLowerCase() === 's') {
+              action = 1; // Save
             } else if (e.ctrlKey && e.key === 'Enter') {
-              action = 2;
+              action = 2; // Execute
+            } else if (e.ctrlKey && e.key.toLowerCase() === 't') {
+              action = 3; // New Tab
+            } else if (e.ctrlKey && e.key.toLowerCase() === 'w') {
+              action = 4; // Close Tab
+            } else if (e.ctrlKey && e.key.toLowerCase() === 'b') {
+              action = 6; // Toggle Sidebar
             }
             
             if (action !== null) {

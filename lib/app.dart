@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'config/theme/theme_provider.dart';
 import 'features/shell/shell_screen.dart';
@@ -16,7 +17,16 @@ class OpenWsdlApp extends StatelessWidget {
           theme: ThemeProvider.lightTheme,
           darkTheme: ThemeProvider.darkTheme,
           themeMode: themeProvider.themeMode,
-          home: const ShellScreen(),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('pt', 'BR'),
+            Locale('en', 'US'),
+          ],
+          home: ShellScreen(key: ShellScreen.globalKey),
         );
       },
     );

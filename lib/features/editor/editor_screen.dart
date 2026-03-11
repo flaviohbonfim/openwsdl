@@ -11,6 +11,8 @@ import '../collections/controller/collection_provider.dart';
 import '../collections/models/collection_model.dart';
 import '../history/controller/history_provider.dart';
 import 'package:flutter/services.dart';
+import '../../config/theme/theme_provider.dart';
+import '../shell/shell_screen.dart';
 
 /// Tela do editor de código
 /// Responsável por gerenciar abas e exibição do Monaco Editor
@@ -137,6 +139,10 @@ class EditorScreenState extends State<EditorScreen> {
                                           tab: activeTab,
                                           onSave: () => save(),
                                           onExecuteRequest: () => executeRequest(),
+                                          onNewTab: () => newTab(),
+                                          onCloseTab: () => closeTab(),
+                                          onToggleTheme: () => context.read<ThemeProvider>().toggleTheme(),
+                                          onToggleSidebar: () => ShellScreen.globalKey.currentState?.toggleSidebar(),
                                         ),
                                         _RequestHeadersEditor(tab: activeTab),
                                       ],
