@@ -69,17 +69,21 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            windows-artifact/*.msix
-            macos-artifact/*.zip
-            linux-artifact/*.zip
+            artifacts/*.msix
+            artifacts/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
