@@ -41,7 +41,7 @@ jobs:
           flutter build windows --release
           dart run msix:create
           mkdir dist
-          mv *.msix dist/
+          copy build\windows\x64\runner\Release\*.msix dist\
 
       - name: Build macOS
         if: matrix.target == 'macos'
