@@ -38,8 +38,26 @@ class WsdlParserService {
   Future<WsdlDefinition> parse(String xmlContent, String sourceUrl) async {
     try {
       final document = XmlDocument.parse(xmlContent);
-      final definitions = document.getElement('wsdl:definitions') ??
+      var definitions = document.getElement('wsdl:definitions') ??
           document.getElement('definitions');
+
+      // SoapUI Project support
+      if (definitions == null) {
+        final soapuiProject = document.getElement('con:soapui-project');
+        if (soapuiProject != null) {
+          // Extrai o conteúdo do primeiro WSDL encontrado (con:content dentro de con:part)
+          final wsdlContent = soapuiProject
+              .findAllElements('con:content')
+              .firstOrNull
+              ?.innerText;
+
+          if (wsdlContent != null) {
+            final wsdlDoc = XmlDocument.parse(wsdlContent);
+            definitions = wsdlDoc.getElement('wsdl:definitions') ??
+                wsdlDoc.getElement('definitions');
+          }
+        }
+      }
 
       if (definitions == null) {
         throw Exception('Elemento wsdl:definitions não encontrado na raiz.');
@@ -52,7 +70,7 @@ class WsdlParserService {
       final namespaces = _extractNamespaces(definitions, schemas);
 
       final services = <WsdlService>[];
-      final serviceElements = definitions.findElements('wsdl:service');
+      final serviceElements = _findWsdlElements(definitions, 'service');
 
       final context = _ParserContext(
         definitions: definitions,
@@ -60,15 +78,8 @@ class WsdlParserService {
         namespaces: namespaces,
       );
 
-      if (serviceElements.isEmpty) {
-        final alternateServices = definitions.findElements('service');
-        for (var serviceEl in alternateServices) {
-          services.add(_parseService(context, serviceEl));
-        }
-      } else {
-        for (var serviceEl in serviceElements) {
-          services.add(_parseService(context, serviceEl));
-        }
+      for (var serviceEl in serviceElements) {
+        services.add(_parseService(context, serviceEl));
       }
 
       return WsdlDefinition(
@@ -80,6 +91,12 @@ class WsdlParserService {
       print('Erro ao parsear WSDL: $e');
       rethrow;
     }
+  }
+
+  Iterable<XmlElement> _findWsdlElements(XmlElement parent, String name) {
+    return parent.children
+        .whereType<XmlElement>()
+        .where((el) => el.localName == name);
   }
 
   Map<String, String> _extractNamespaces(
@@ -128,8 +145,7 @@ class WsdlParserService {
 
   Future<List<XmlElement>> _extractAllSchemas(
       XmlElement definitions, String baseUrl) async {
-    final types = definitions.findElements('wsdl:types').firstOrNull ??
-        definitions.findElements('types').firstOrNull;
+    final types = _findWsdlElements(definitions, 'types').firstOrNull;
     if (types == null) return [];
 
     // Busca todos os elementos que terminam com 'schema' (ex: xsd:schema, xs:schema, schema)
@@ -194,20 +210,14 @@ class WsdlParserService {
     }
   }
 
+
   WsdlService _parseService(_ParserContext context, XmlElement serviceEl) {
     final name = serviceEl.getAttribute('name') ?? 'Serviço sem nome';
     final ports = <WsdlPort>[];
 
-    final portElements = serviceEl.findElements('wsdl:port');
-    if (portElements.isEmpty) {
-      final alternatePorts = serviceEl.findElements('port');
-      for (var portEl in alternatePorts) {
-        ports.add(_parsePort(context, portEl));
-      }
-    } else {
-      for (var portEl in portElements) {
-        ports.add(_parsePort(context, portEl));
-      }
+    final portElements = _findWsdlElements(serviceEl, 'port');
+    for (var portEl in portElements) {
+      ports.add(_parsePort(context, portEl));
     }
 
     return WsdlService(name: name, ports: ports);
@@ -219,9 +229,7 @@ class WsdlParserService {
     final bindingName = bindingQualifiedName?.split(':').last;
 
     String endpoint = '';
-    final addressEl = portEl.findElements('soap:address').firstOrNull ??
-        portEl.findElements('soap12:address').firstOrNull ??
-        portEl.findElements('address').firstOrNull;
+    final addressEl = _findWsdlElements(portEl, 'address').firstOrNull;
 
     if (addressEl != null) {
       endpoint = addressEl.getAttribute('location') ?? '';
@@ -241,32 +249,29 @@ class WsdlParserService {
     final mapper =
         XsdMapper(context.definitions, context.schemas, context.namespaces);
 
-    final bindings = context.definitions.findElements('wsdl:binding');
+    final bindings = _findWsdlElements(context.definitions, 'binding');
     final targetBinding =
         bindings.firstWhereOrNull((b) => b.getAttribute('name') == bindingName);
 
     if (targetBinding != null) {
       final portTypeName = targetBinding.getAttribute('type')?.split(':').last;
-      final portTypes = context.definitions.findElements('wsdl:portType');
+      final portTypes = _findWsdlElements(context.definitions, 'portType');
       final targetPortType = portTypes
           .firstWhereOrNull((p) => p.getAttribute('name') == portTypeName);
 
-      final bindingOperations = targetBinding.findElements('wsdl:operation');
+      final bindingOperations = _findWsdlElements(targetBinding, 'operation');
       for (var opEl in bindingOperations) {
         final opName = opEl.getAttribute('name');
         if (opName == null) continue;
 
-        final soapOpEl = opEl.findElements('soap:operation').firstOrNull ??
-            opEl.findElements('soap12:operation').firstOrNull;
+        final soapOpEl = _findWsdlElements(opEl, 'operation').firstOrNull;
 
         final soapAction = soapOpEl?.getAttribute('soapAction');
 
-        final portTypeOperation = targetPortType
-            ?.findElements('wsdl:operation')
+        final portTypeOperation = _findWsdlElements(targetPortType!, 'operation')
             .firstWhereOrNull((o) => o.getAttribute('name') == opName);
 
-        final inputMessageRef = portTypeOperation
-            ?.findElements('wsdl:input')
+        final inputMessageRef = _findWsdlElements(portTypeOperation!, 'input')
             .firstOrNull
             ?.getAttribute('message');
 
@@ -280,12 +285,11 @@ class WsdlParserService {
             parameters = mapper.getParametersForMessage(inputMessageName);
 
             // Tenta descobrir o namespace da própria operação (o elemento raiz no Body)
-            final message = context.definitions
-                .findElements('wsdl:message')
+            final message = _findWsdlElements(context.definitions, 'message')
                 .firstWhereOrNull(
                     (m) => m.getAttribute('name') == inputMessageName);
             if (message != null) {
-              final part = message.findElements('wsdl:part').firstOrNull;
+              final part = _findWsdlElements(message, 'part').firstOrNull;
               final elementAttr = part?.getAttribute('element');
               if (elementAttr != null) {
                 final parts = elementAttr.split(':');
