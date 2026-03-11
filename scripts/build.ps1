@@ -1,6 +1,6 @@
-# Script de build para o SOAP-Lite (Fase 7)
+# Script de build para o OpenWSDL (Fase 7)
 
-Write-Host "Iniciando build do SOAP-Lite v1.0.0..." -ForegroundColor Cyan
+Write-Host "Iniciando build do OpenWSDL v1.0.0..." -ForegroundColor Cyan
 
 # 1. Limpeza
 Write-Host "Limpando build anterior..."

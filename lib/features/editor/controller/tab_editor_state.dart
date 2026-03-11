@@ -1,21 +1,24 @@
-import 'package:flutter/foundation.dart';
 import '../../http_client/models/soap_response.dart';
 
-/// Representa o estado de uma aba no editor (Renomeado para evitar conflito com flutter_monaco)
+/// Representa o estado de uma aba no editor
 class TabEditorState {
   final String id;
   String title;
   String content;
   bool isModified;
-  String? language; // Mantemos como string no modelo e convertemos no widget
+  String? language;
 
-  // Atributos de execução (Fase 4)
+  // Atributos de execução
   String? endpoint;
   String? soapAction;
   Map<String, String> customHeaders;
   SoapResponse? lastResponse;
   bool isExecuting;
-  String? savedRequestId; // ID da requisição se ela vier de uma coleção
+  
+  // Persistência e Origem
+  String? savedRequestId;
+  String? collectionId; // ID da coleção de origem
+  String? folderId;     // ID da pasta de origem (opcional)
 
   TabEditorState({
     required this.id,
@@ -29,6 +32,8 @@ class TabEditorState {
     this.lastResponse,
     this.isExecuting = false,
     this.savedRequestId,
+    this.collectionId,
+    this.folderId,
   }) : customHeaders = customHeaders ?? {};
 
   TabEditorState copyWith({
@@ -43,6 +48,8 @@ class TabEditorState {
     SoapResponse? lastResponse,
     bool? isExecuting,
     String? savedRequestId,
+    String? collectionId,
+    String? folderId,
   }) {
     return TabEditorState(
       id: id ?? this.id,
@@ -56,6 +63,8 @@ class TabEditorState {
       lastResponse: lastResponse ?? this.lastResponse,
       isExecuting: isExecuting ?? this.isExecuting,
       savedRequestId: savedRequestId ?? this.savedRequestId,
+      collectionId: collectionId ?? this.collectionId,
+      folderId: folderId ?? this.folderId,
     );
   }
 }

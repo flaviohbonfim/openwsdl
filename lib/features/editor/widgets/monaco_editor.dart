@@ -11,10 +11,14 @@ import 'dart:async';
 
 class MonacoEditorWidget extends StatefulWidget {
   final TabEditorState tab;
+  final VoidCallback? onSave;
+  final VoidCallback? onExecuteRequest;
 
   const MonacoEditorWidget({
     super.key,
     required this.tab,
+    this.onSave,
+    this.onExecuteRequest,
   });
 
   @override
@@ -120,6 +124,16 @@ class MonacoEditorWidgetState extends State<MonacoEditorWidget> {
           _updateVariableFeatures(value);
         }
       },
+      onSelectionChanged: (range) {
+        if (range != null && range.startLine == 9999999) {
+          if (range.startColumn == 1) {
+            widget.onSave?.call();
+          } else if (range.startColumn == 2) {
+            widget.onExecuteRequest?.call();
+          }
+          return;
+        }
+      },
       customCss: '''
         .env-var-highlight {
           color: #ff9800 !important;
@@ -131,6 +145,37 @@ class MonacoEditorWidgetState extends State<MonacoEditorWidget> {
         .monaco-editor .hover-contents * {
           user-select: text;
         }
+        </style>
+        <script>
+          document.addEventListener('keydown', function(e) {
+            let action = null;
+            if (e.ctrlKey && e.key.toLowerCase() === 's') {
+              action = 1;
+            } else if (e.ctrlKey && e.key === 'Enter') {
+              action = 2;
+            }
+            
+            if (action !== null) {
+              e.preventDefault();
+              e.stopPropagation();
+              var msg = JSON.stringify({
+                event: 'selectionChanged',
+                selection: {
+                  startLineNumber: 9999999,
+                  endLineNumber: 9999999,
+                  startColumn: action,
+                  endColumn: action
+                }
+              });
+              if (window.flutterMonacoPostMessage) {
+                window.flutterMonacoPostMessage(msg);
+              } else if (window.flutterChannel && window.flutterChannel.postMessage) {
+                window.flutterChannel.postMessage(msg);
+              }
+            }
+          }, true);
+        </script>
+        <style>
       ''',
     );
   }

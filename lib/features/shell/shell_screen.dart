@@ -8,11 +8,6 @@ import '../../config/theme/theme_provider.dart';
 import '../editor/editor_screen.dart';
 
 /// Tela principal da aplicação (Shell)
-/// Layout estilo VS Code com:
-/// - NavigationRail lateral esquerda
-/// - ExplorerSidebar redimensionável
-/// - Área central de editor
-/// - StatusBar inferior
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
   
@@ -21,6 +16,7 @@ class ShellScreen extends StatefulWidget {
 }
 
 class _ShellScreenState extends State<ShellScreen> {
+  final GlobalKey<EditorScreenState> _editorScreenKey = GlobalKey<EditorScreenState>();
   int _selectedNavIndex = 0;
   bool _isSidebarVisible = false;
   double _sidebarWidth = 250;
@@ -39,134 +35,140 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 
   bool _handleGlobalKeys(KeyEvent event) {
-    if (event is KeyDownEvent) {
-      final isControlPressed = HardwareKeyboard.instance.isControlPressed;
-      final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
-      final isAltPressed = HardwareKeyboard.instance.isAltPressed;
+    if (event is! KeyDownEvent) return false;
 
-      // Ctrl + B (Toggle Sidebar)
-      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyB) {
-        setState(() => _isSidebarVisible = !_isSidebarVisible);
-        return true;
-      }
+    final isControl = HardwareKeyboard.instance.isControlPressed;
+    final isShift = HardwareKeyboard.instance.isShiftPressed;
+    final isAlt = HardwareKeyboard.instance.isAltPressed;
 
-      // Ctrl + Shift + T (Toggle Theme) - Corrigi o atalho de acordo com o plano original
-      if (isControlPressed && isShiftPressed && event.logicalKey == LogicalKeyboardKey.keyT) {
-        context.read<ThemeProvider>().toggleTheme();
-        return true;
-      }
-      
-      // Atalhos do Editor delegados via Actions para o EditorScreen
-      // Ctrl + S
-      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyS) {
-        Actions.maybeInvoke(context, const SaveIntent());
-        return true;
-      }
-
-      // Ctrl + Enter
-      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.enter) {
-        Actions.maybeInvoke(context, const ExecuteRequestIntent());
-        return true;
-      }
-
-      // Ctrl + T (Nova Aba)
-      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyT && !isShiftPressed) {
-        Actions.maybeInvoke(context, const NewTabIntent());
-        return true;
-      }
-
-      // Ctrl + W (Fechar Aba)
-      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyW) {
-        Actions.maybeInvoke(context, const CloseTabIntent());
-        return true;
-      }
-
-      // Shift + Alt + F (Formatar)
-      if (isShiftPressed && isAltPressed && event.logicalKey == LogicalKeyboardKey.keyF) {
-        Actions.maybeInvoke(context, const FormatIntent());
-        return true;
-      }
+    // Atalhos que funcionam sempre
+    
+    // Ctrl + B (Toggle Sidebar)
+    if (isControl && event.logicalKey == LogicalKeyboardKey.keyB) {
+      setState(() => _isSidebarVisible = !_isSidebarVisible);
+      return true;
     }
+
+    // Ctrl + Shift + T (Toggle Theme)
+    if (isControl && isShift && event.logicalKey == LogicalKeyboardKey.keyT) {
+      context.read<ThemeProvider>().toggleTheme();
+      return true;
+    }
+    
+    final editor = _editorScreenKey.currentState;
+    if (editor == null) return false;
+
+    // Ctrl + S (Salvar)
+    if (isControl && event.logicalKey == LogicalKeyboardKey.keyS) {
+      editor.save();
+      return true;
+    }
+
+    // Ctrl + Enter (Executar)
+    if (isControl && event.logicalKey == LogicalKeyboardKey.enter) {
+      editor.executeRequest();
+      return true;
+    }
+
+    // Ctrl + T (Nova Aba) - Só se não for Shift+T
+    if (isControl && event.logicalKey == LogicalKeyboardKey.keyT && !isShift) {
+      editor.newTab();
+      return true;
+    }
+
+    // Ctrl + W (Fechar Aba)
+    if (isControl && event.logicalKey == LogicalKeyboardKey.keyW) {
+      editor.closeTab();
+      return true;
+    }
+
+    // Shift + Alt + F (Formatar)
+    if (isShift && isAlt && event.logicalKey == LogicalKeyboardKey.keyF) {
+      editor.format();
+      return true;
+    }
+
     return false;
   }
   
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          // NavigationRail
-          AppNavigationRail(
-            selectedIndex: _selectedNavIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                if (_selectedNavIndex == index) {
-                  _isSidebarVisible = !_isSidebarVisible;
-                } else {
-                  _selectedNavIndex = index;
-                  _isSidebarVisible = true;
-                }
-              });
-            },
-          ),
-          
-          // Sidebar redimensionável
-          if (_isSidebarVisible) ...[
-            Sidebar(
+    return Focus(
+      // Este Focus permite que o Flutter receba os eventos de teclado 
+      // mesmo quando o Monaco (PlatformView) está "ativo", 
+      // mas sem roubar o foco de digitação.
+      autofocus: true,
+      debugLabel: 'ShellGlobalFocus',
+      child: Scaffold(
+        body: Row(
+          children: [
+            // NavigationRail
+            AppNavigationRail(
               selectedIndex: _selectedNavIndex,
-              width: _sidebarWidth,
+              onDestinationSelected: (index) {
+                setState(() {
+                  if (_selectedNavIndex == index) {
+                    _isSidebarVisible = !_isSidebarVisible;
+                  } else {
+                    _selectedNavIndex = index;
+                    _isSidebarVisible = true;
+                  }
+                });
+              },
             ),
-            // Divisor redimensionável
-            MouseRegion(
-              cursor: SystemMouseCursors.resizeLeftRight,
-              child: GestureDetector(
-                onHorizontalDragStart: (details) {
-                  setState(() => _isResizing = true);
-                },
-                onHorizontalDragUpdate: (details) {
-                  setState(() {
-                    _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(150.0, 400.0);
-                  });
-                },
-                onHorizontalDragEnd: (details) {
-                  setState(() => _isResizing = false);
-                },
-                child: Container(
-                  width: 4,
-                  color: _isResizing 
-                      ? Theme.of(context).colorScheme.primary 
-                      : Colors.transparent,
+            
+            // Sidebar redimensionável
+            if (_isSidebarVisible) ...[
+              Sidebar(
+                selectedIndex: _selectedNavIndex,
+                width: _sidebarWidth,
+              ),
+              // Divisor redimensionável
+              MouseRegion(
+                cursor: SystemMouseCursors.resizeLeftRight,
+                child: GestureDetector(
+                  onHorizontalDragStart: (details) {
+                    setState(() => _isResizing = true);
+                  },
+                  onHorizontalDragUpdate: (details) {
+                    setState(() {
+                      _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(150.0, 400.0);
+                    });
+                  },
+                  onHorizontalDragEnd: (details) {
+                    setState(() => _isResizing = false);
+                  },
                   child: Container(
-                    width: 1,
-                    color: Theme.of(context).dividerColor,
+                    width: 4,
+                    color: _isResizing 
+                        ? Theme.of(context).colorScheme.primary 
+                        : Colors.transparent,
+                    child: Container(
+                      width: 1,
+                      color: Theme.of(context).dividerColor,
+                    ),
                   ),
                 ),
               ),
+            ],
+            
+            // Área Principal (Editor + Status Bar)
+            Expanded(
+              child: Column(
+                children: [
+                  // Área do Editor
+                  Expanded(
+                    child: EditorScreen(key: _editorScreenKey),
+                  ),
+                  
+                  // Barra de Status
+                  const StatusBar(),
+                ],
+              ),
             ),
           ],
-          
-          // Área Principal (Editor + Status Bar)
-          Expanded(
-            child: Column(
-              children: [
-                // Área do Editor
-                Expanded(
-                  child: _buildEditorArea(),
-                ),
-                
-                // Barra de Status
-                const StatusBar(),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
-
-  Widget _buildEditorArea() {
-    return const EditorScreen();
-  }
 }
-
-

@@ -315,7 +315,11 @@ class _RequestItem extends StatelessWidget {
         ],
       ),
       onTap: () {
-        context.read<TabManager>().addSavedRequestTab(request);
+        context.read<TabManager>().addSavedRequestTab(
+              request,
+              collectionId,
+              folderId: folderId,
+            );
       },
       trailing: IconButton(
         icon: const Icon(Icons.delete_outline, size: 16),

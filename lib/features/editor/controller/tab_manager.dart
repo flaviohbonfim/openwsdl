@@ -13,7 +13,7 @@ class TabManager extends ChangeNotifier {
   final List<TabEditorState> _tabs = [];
   int _activeTabIndex = -1;
   final SoapHttpClient _client = SoapHttpClient();
-  bool _isVerticalSplit = true; // Lado a lado por padrão
+  bool _isVerticalSplit = true;
 
   List<TabEditorState> get tabs => List.unmodifiable(_tabs);
   int get activeTabIndex => _activeTabIndex;
@@ -39,6 +39,8 @@ class TabManager extends ChangeNotifier {
     String? soapAction,
     Map<String, String>? customHeaders,
     String? savedRequestId,
+    String? collectionId,
+    String? folderId,
   }) {
     final newId = DateTime.now().millisecondsSinceEpoch.toString();
     final newTab = TabEditorState(
@@ -50,13 +52,15 @@ class TabManager extends ChangeNotifier {
       soapAction: soapAction,
       customHeaders: customHeaders ?? {},
       savedRequestId: savedRequestId,
+      collectionId: collectionId,
+      folderId: folderId,
     );
     _tabs.add(newTab);
     _activeTabIndex = _tabs.length - 1;
     notifyListeners();
   }
 
-  void addSavedRequestTab(SavedRequest request) {
+  void addSavedRequestTab(SavedRequest request, String collectionId, {String? folderId}) {
     addTab(
       title: request.name,
       content: request.body,
@@ -64,14 +68,14 @@ class TabManager extends ChangeNotifier {
       soapAction: request.soapAction,
       customHeaders: request.headers,
       savedRequestId: request.id,
+      collectionId: collectionId,
+      folderId: folderId,
     );
   }
 
   void closeTab(int index) {
     if (index < 0 || index >= _tabs.length) return;
-
     _tabs.removeAt(index);
-
     if (_activeTabIndex >= _tabs.length) {
       _activeTabIndex = _tabs.length - 1;
     } else if (_activeTabIndex == index) {
@@ -79,7 +83,6 @@ class TabManager extends ChangeNotifier {
     } else if (_activeTabIndex > index) {
       _activeTabIndex--;
     }
-
     notifyListeners();
   }
 
@@ -119,7 +122,6 @@ class TabManager extends ChangeNotifier {
     }
   }
 
-  /// Executa a requisição SOAP da aba ativa
   Future<void> executeSoapRequest({
     Map<String, String> variables = const {},
     HistoryProvider? historyProvider,
@@ -158,7 +160,6 @@ class TabManager extends ChangeNotifier {
       );
       tab.lastResponse = response;
 
-      // Adicionar ao histórico
       if (historyProvider != null) {
         historyProvider.addHistoryItem(HistoryItem(
           requestName: tab.title,
