@@ -70,16 +70,19 @@ class AppNavigationRail extends StatelessWidget {
       ),
       destinations: const [
         NavigationRailDestination(
-          icon: Icon(Icons.folder_open),
-          label: Text('Explorador'),
+          icon: Icon(Icons.folder_open_outlined),
+          selectedIcon: Icon(Icons.folder_open),
+          label: Text('WSDL'),
         ),
         NavigationRailDestination(
-          icon: Icon(Icons.search),
-          label: Text('Buscar'),
+          icon: Icon(Icons.collections_bookmark_outlined),
+          selectedIcon: Icon(Icons.collections_bookmark),
+          label: Text('Coleções'),
         ),
         NavigationRailDestination(
-          icon: Icon(Icons.extension),
-          label: Text('Extensões'),
+          icon: Icon(Icons.history_outlined),
+          selectedIcon: Icon(Icons.history),
+          label: Text('Histórico'),
         ),
       ],
     );

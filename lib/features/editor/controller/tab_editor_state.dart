@@ -24,10 +24,10 @@ class TabEditorState {
     this.language = 'xml',
     this.endpoint,
     this.soapAction,
-    this.customHeaders = const {},
+    Map<String, String>? customHeaders,
     this.lastResponse,
     this.isExecuting = false,
-  });
+  }) : customHeaders = customHeaders ?? {};
 
   TabEditorState copyWith({
     String? id,

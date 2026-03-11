@@ -35,22 +35,22 @@ class _ShellScreenState extends State<ShellScreen> {
             selectedIndex: _selectedNavIndex,
             onDestinationSelected: (index) {
               setState(() {
-                _selectedNavIndex = index;
-                
-                // Mostrar sidebar apenas para explorador
-                if (index == 0) {
-                  _isSidebarVisible = true;
+                if (_selectedNavIndex == index) {
+                  // Se clicou no mesmo ícone, alterna visibilidade da sidebar
+                  _isSidebarVisible = !_isSidebarVisible;
                 } else {
-                  _isSidebarVisible = false;
+                  // Se mudou de aba, garante que a sidebar está visível
+                  _selectedNavIndex = index;
+                  _isSidebarVisible = true;
                 }
               });
             },
           ),
           
-          // Explorer Sidebar (visível apenas no índice 0)
+          // Sidebar redimensionável
           if (_isSidebarVisible) ...[
-            ExplorerSidebar(
-              isVisible: _isSidebarVisible,
+            Sidebar(
+              selectedIndex: _selectedNavIndex,
               width: _sidebarWidth,
             ),
             // Divisor redimensionável
