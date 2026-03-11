@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme/theme_provider.dart';
 import '../settings/widgets/settings_modal.dart';
@@ -31,10 +32,14 @@ class AppNavigationRail extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
           // Logo/Ícone do App
-          Icon(
-            Icons.code,
-            size: 28,
-            color: Theme.of(context).colorScheme.primary,
+          SvgPicture.asset(
+            'assets/icons/app_icon.svg',
+            width: 28,
+            height: 28,
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).colorScheme.primary,
+              BlendMode.srcIn,
+            ),
           ),
           const SizedBox(height: 24),
         ],

@@ -24,6 +24,7 @@ dependencies:
 
   # Ícones
   flutter_svg: ^2.0.9
+  url_launcher: ^6.3.1
 
   # Utilitários
   path_provider: ^2.1.2
@@ -42,7 +43,21 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   msix: ^3.16.7
+  flutter_launcher_icons: ^0.13.1
 
+flutter_launcher_icons:
+  android: false
+  ios: false
+  windows:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+  linux:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
 
 msix_config:
   display_name: OpenWsdl

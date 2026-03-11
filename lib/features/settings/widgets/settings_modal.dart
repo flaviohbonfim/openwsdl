@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../history/controller/history_provider.dart';
 import 'shortcut_details_modal.dart';
 
@@ -66,7 +68,21 @@ class SettingsModal extends StatelessWidget {
                     ),
                   ),
                   const Divider(),
+                  const Divider(),
                   _buildSection(context, 'Projeto Open Source'),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: SvgPicture.asset(
+                        'assets/icons/app_icon.svg',
+                        height: 64,
+                        colorFilter: ColorFilter.mode(
+                          Theme.of(context).colorScheme.primary,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ),
                   const ListTile(
                     title: Text('Nome do Projeto'),
                     trailing: Text('OpenWsdl'),
@@ -79,9 +95,23 @@ class SettingsModal extends StatelessWidget {
                     title: Text('Licença'),
                     trailing: Text('MIT'),
                   ),
-                  const ListTile(
-                    title: Text('Comunidade'),
-                    trailing: Text('openwsdl.io'),
+                  ListTile(
+                    title: const Text('Website'),
+                    trailing: InkWell(
+                      onTap: () async {
+                        final url = Uri.parse('https://github.com/flaviohbonfim/openwsdl');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
+                      },
+                      child: Text(
+                        'github.com/flaviohbonfim/openwsdl',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
