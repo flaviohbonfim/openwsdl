@@ -1,4 +1,4 @@
-# SOAP-Lite
+# OpenWsdl
 
 Cliente SOAP desktop cross-platform leve, rápido e moderno, focado em performance e ergonomia visual.
 
@@ -69,7 +69,7 @@ flutter run -d linux    # Linux
 ## 📦 Estrutura do Projeto
 
 ```
-soap-lite/
+OpenWsdl/
 ├── lib/
 │   ├── main.dart
 │   ├── app.dart

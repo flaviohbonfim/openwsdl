@@ -1,6 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:soap_lite/features/wsdl/models/wsdl_definition.dart';
-import 'package:soap_lite/features/wsdl/parser/wsdl_parser_service.dart';
+import 'package:openwsdl/features/wsdl/models/wsdl_definition.dart';
+import 'package:openwsdl/features/wsdl/parser/wsdl_parser_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class WsdlProvider with ChangeNotifier {
@@ -36,6 +37,27 @@ class WsdlProvider with ChangeNotifier {
     }
   }
 
+  Future<void> importWsdlFromContent(String content, String sourcePath) async {
+    // Evita duplicados
+    if (_definitions.any((d) => d.sourceUrl == sourcePath)) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final definition = await _parserService.parseFromContent(content, sourcePath);
+      definition.isLoaded = true;
+      _definitions.add(definition);
+      await _saveToPrefs();
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Carrega o conteúdo de um WSDL que foi apenas listado (persistido)
   Future<void> loadWsdl(WsdlDefinition definition) async {
     if (definition.isLoaded) return;
@@ -44,7 +66,19 @@ class WsdlProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final newDef = await _parserService.parseFromUrl(definition.sourceUrl);
+      WsdlDefinition newDef;
+      if (definition.sourceUrl.startsWith('http')) {
+        newDef = await _parserService.parseFromUrl(definition.sourceUrl);
+      } else {
+        // Assume file path
+        final file = File(definition.sourceUrl);
+        if (await file.exists()) {
+          final content = await file.readAsString();
+          newDef = await _parserService.parseFromContent(content, definition.sourceUrl);
+        } else {
+          throw Exception('Arquivo não encontrado: ${definition.sourceUrl}');
+        }
+      }
 
       // Atualiza o objeto existente com os dados carregados
       final index = _definitions.indexOf(definition);

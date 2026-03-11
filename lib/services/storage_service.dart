@@ -45,7 +45,7 @@ class StorageService {
 
   Future<Directory> getAppDirectory() async {
     final docs = await getApplicationDocumentsDirectory();
-    final appDir = Directory(p.join(docs.path, 'SOAP-Lite'));
+    final appDir = Directory(p.join(docs.path, 'OpenWsdl'));
     if (!await appDir.exists()) {
       await appDir.create(recursive: true);
     }

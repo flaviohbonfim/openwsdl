@@ -5,8 +5,8 @@ import 'package:uuid/uuid.dart';
 import '../models/environment_model.dart';
 
 class EnvironmentProvider extends ChangeNotifier {
-  static const String _storageKey = 'soap_lite_environments';
-  static const String _activeIdKey = 'soap_lite_active_environment_id';
+  static const String _storageKey = 'openwsdl_environments';
+  static const String _activeIdKey = 'openwsdl_active_environment_id';
   static const _uuid = Uuid();
 
   List<Environment> _environments = [];

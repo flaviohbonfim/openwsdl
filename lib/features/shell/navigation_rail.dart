@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme/theme_provider.dart';
+import '../settings/widgets/settings_modal.dart';
 
 /// Barra de navegação lateral estilo VS Code
 /// Contém ícones de acesso rápido para diferentes funcionalidades
@@ -59,10 +60,14 @@ class AppNavigationRail extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  // TODO: Implementar configurações
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SettingsModal(),
+                  );
                 },
                 tooltip: 'Configurações',
               ),
+
               const SizedBox(height: 8),
             ],
           ),

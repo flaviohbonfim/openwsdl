@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../http_client/services/soap_http_client.dart';
 import '../../http_client/models/soap_response.dart';
-import 'package:soap_lite/core/utils/xml_utils.dart';
+import 'package:openwsdl/core/utils/xml_utils.dart';
 import 'tab_editor_state.dart';
 import '../../environment/services/variable_interpolator.dart';
 import '../../collections/models/collection_model.dart';

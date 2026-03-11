@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:soap_lite/features/wsdl/models/soap_operation.dart';
-import 'package:soap_lite/features/wsdl/models/wsdl_definition.dart';
-import 'package:soap_lite/features/wsdl/wsdl_provider.dart';
-import 'package:soap_lite/features/editor/controller/tab_manager.dart';
-import 'package:soap_lite/features/wsdl/parser/soap_template_generator.dart';
+import 'package:openwsdl/features/wsdl/models/soap_operation.dart';
+import 'package:openwsdl/features/wsdl/models/wsdl_definition.dart';
+import 'package:openwsdl/features/wsdl/wsdl_provider.dart';
+import 'package:openwsdl/features/editor/controller/tab_manager.dart';
+import 'package:openwsdl/features/wsdl/parser/soap_template_generator.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class WsdlExplorer extends StatelessWidget {
   const WsdlExplorer({super.key});
@@ -15,7 +16,10 @@ class WsdlExplorer extends StatelessWidget {
     final definitions = wsdlProvider.definitions;
 
     if (definitions.isEmpty) {
-      return _buildEmptyState(context);
+      return _buildEmptyState(context)
+          .animate()
+          .fadeIn(duration: 400.ms)
+          .slideY(begin: 0.1, end: 0);
     }
 
     return Column(
@@ -25,20 +29,24 @@ class WsdlExplorer extends StatelessWidget {
             minHeight: 2,
             backgroundColor: Colors.transparent,
             valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-          ),
+          ).animate().fadeIn(),
         Expanded(
           child: ListView.builder(
             itemCount: definitions.length,
             padding: EdgeInsets.zero,
             itemBuilder: (context, index) {
               final wsdl = definitions[index];
-              return _buildWsdlNode(context, wsdl, wsdlProvider);
+              return _buildWsdlNode(context, wsdl, wsdlProvider)
+                  .animate(delay: (index * 50).ms)
+                  .fadeIn(duration: 300.ms)
+                  .slideX(begin: -0.05, end: 0);
             },
           ),
         ),
       ],
     );
   }
+
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(

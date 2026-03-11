@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app.dart';
@@ -9,28 +11,53 @@ import 'features/collections/controller/collection_provider.dart';
 import 'features/history/controller/history_provider.dart';
 import 'services/storage_service.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar serviços de persistência
-  final storage = StorageService();
-  await storage.init();
+    // 7.1: Otimizar o processo de inicialização - Inicialização em paralelo
+    final initFutures = [
+      StorageService().init(),
+      ThemeProvider.initialize(),
+    ];
 
-  // Inicializar preferências (tema, etc.)
-  await ThemeProvider.initialize();
+    await Future.wait(initFutures);
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => EnvironmentProvider()),
-        ChangeNotifierProvider(create: (_) => TabManager()..initIfEmpty()),
-        ChangeNotifierProvider(create: (_) => WsdlProvider()),
-        ChangeNotifierProvider(
-            create: (_) => CollectionProvider()..loadCollections()),
-        ChangeNotifierProvider(create: (_) => HistoryProvider()..loadHistory()),
-      ],
-      child: const SoapLiteApp(),
-    ),
-  );
+    // Configurar tratamento de erros do Flutter
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      // Aqui poderíamos enviar para um serviço de log/crashlytics
+      if (kDebugMode) {
+        print('Flutter Error: ${details.exception}');
+      }
+    };
+
+    // Erros de plataforma/assíncronos
+    PlatformDispatcher.instance.onError = (error, stack) {
+      if (kDebugMode) {
+        print('Platform Error: $error');
+      }
+      return true;
+    };
+
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => EnvironmentProvider()),
+          ChangeNotifierProvider(create: (_) => TabManager()..initIfEmpty()),
+          ChangeNotifierProvider(create: (_) => WsdlProvider()),
+          ChangeNotifierProvider(
+              create: (_) => CollectionProvider()..loadCollections()),
+          ChangeNotifierProvider(create: (_) => HistoryProvider()..loadHistory()),
+        ],
+        child: const OpenWsdlApp(),
+      ),
+    );
+  }, (error, stack) {
+    if (kDebugMode) {
+      print('Uncaught Zone Error: $error');
+    }
+  });
 }
+

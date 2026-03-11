@@ -1,4 +1,4 @@
-import 'package:soap_lite/features/wsdl/models/soap_operation.dart';
+import 'package:openwsdl/features/wsdl/models/soap_operation.dart';
 
 class SoapTemplateGenerator {
   static String generate(SoapOperation op) {

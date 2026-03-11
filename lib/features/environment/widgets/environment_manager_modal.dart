@@ -30,8 +30,8 @@ class _EnvironmentManagerModalState extends State<EnvironmentManagerModal> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       surfaceTintColor: Colors.transparent,
       child: Container(
-        width: 800,
-        height: 600,
+        width: 1000,
+        height: 700,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +56,7 @@ class _EnvironmentManagerModalState extends State<EnvironmentManagerModal> {
                 children: [
                   // Sidebar - Environments List
                   SizedBox(
-                    width: 200,
+                    width: 300,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -85,21 +85,28 @@ class _EnvironmentManagerModalState extends State<EnvironmentManagerModal> {
                                 dense: true,
                                 selected: isSelected,
                                 title: Text(env.name),
-                                trailing: isSelected
-                                    ? Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.copy, size: 14),
-                                            onPressed: () => provider.duplicateEnvironment(env.id),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete_outline, size: 14),
-                                            onPressed: () => provider.deleteEnvironment(env.id),
-                                          ),
-                                        ],
-                                      )
-                                    : null,
+                                  trailing: isSelected
+                                      ? Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.edit_outlined, size: 14),
+                                              onPressed: () => _showRenameEnvironmentDialog(context, provider, env),
+                                              tooltip: 'Rename Environment',
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.copy, size: 14),
+                                              onPressed: () => provider.duplicateEnvironment(env.id),
+                                              tooltip: 'Duplicate Environment',
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.delete_outline, size: 14),
+                                              onPressed: () => provider.deleteEnvironment(env.id),
+                                              tooltip: 'Delete Environment',
+                                            ),
+                                          ],
+                                        )
+                                      : null,
                                 onTap: () {
                                   setState(() {
                                     _selectedEnvId = env.id;
@@ -163,7 +170,40 @@ class _EnvironmentManagerModalState extends State<EnvironmentManagerModal> {
       ),
     );
   }
+
+  void _showRenameEnvironmentDialog(BuildContext context, EnvironmentProvider provider, Environment env) {
+    final controller = TextEditingController(text: env.name);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename Environment'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Environment Name',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                provider.updateEnvironment(env.copyWith(name: controller.text));
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
 class _VariablesEditor extends StatefulWidget {
   final Environment environment;

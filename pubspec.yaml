@@ -1,6 +1,6 @@
-name: soap_lite
-description: Cliente SOAP desktop cross-platform leve, rápido e moderno.
-version: 0.0.1
+name: openwsdl
+description: Cliente WSDL/SOAP Open Source desktop cross-platform leve, rápido e moderno.
+version: 1.0.0+1
 publish_to: none
 
 environment:
@@ -32,14 +32,28 @@ dependencies:
   flutter_monaco: ^1.4.0
   uuid: ^4.3.3
   file_picker: ^10.3.10
+  flutter_animate: ^4.5.0
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  msix: ^3.16.7
+
+
+msix_config:
+  display_name: OpenWsdl
+  publisher_display_name: OpenWsdl Open Source
+  identity_name: io.openwsdl.app
+  publisher: CN=OpenWsdl
+  msix_version: 1.0.0.0
+  logo_path: assets/icons/app_icon.png
+  capabilities: internetClient
+  install_location: LocalAppData
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/
 
-  # assets:
-  #   - assets/themes/

@@ -8,14 +8,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:soap_lite/app.dart';
+import 'package:openwsdl/app.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const SoapLiteApp());
+    await tester.pumpWidget(const OpenWsdlApp());
 
     // Verify that the app title is present (just as a basic check)
-    expect(find.text('SOAP-Lite'), findsOneWidget);
+    expect(find.text('OpenWsdl'), findsOneWidget);
   });
 }

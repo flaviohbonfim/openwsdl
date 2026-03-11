@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "soap_lite" "\0"
+            VALUE "CompanyName", "io.openwsdl" "\0"
+            VALUE "FileDescription", "OpenWsdl" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "soap_lite" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "soap_lite.exe" "\0"
-            VALUE "ProductName", "soap_lite" "\0"
+            VALUE "InternalName", "openwsdl" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 io.openwsdl. All rights reserved." "\0"
+            VALUE "OriginalFilename", "openwsdl.exe" "\0"
+            VALUE "ProductName", "OpenWsdl" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -53,13 +53,14 @@ class StatusBar extends StatelessWidget {
           const SizedBox(width: 16),
           
           // Versão do App
-          Text(
-            'v0.0.1',
+          const Text(
+            'v1.0.0',
             style: TextStyle(
               color: Colors.white,
               fontSize: 11,
             ),
           ),
+
         ],
       ),
     );

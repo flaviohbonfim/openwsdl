@@ -1,8 +1,8 @@
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
 import 'package:collection/collection.dart';
-import 'package:soap_lite/features/wsdl/models/soap_operation.dart';
-import 'package:soap_lite/features/wsdl/models/wsdl_definition.dart';
+import 'package:openwsdl/features/wsdl/models/soap_operation.dart';
+import 'package:openwsdl/features/wsdl/models/wsdl_definition.dart';
 
 import 'xsd_mapper.dart';
 
@@ -10,13 +10,30 @@ class WsdlParserService {
   final http.Client _client = http.Client();
 
   Future<WsdlDefinition> parseFromUrl(String url) async {
-    final response = await _client.get(Uri.parse(url));
-    if (response.statusCode != 200) {
-      throw Exception('Falha ao baixar WSDL de $url: ${response.statusCode}');
-    }
+    try {
+      final response = await _client
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 10));
+          
+      if (response.statusCode != 200) {
+        throw Exception('Falha ao baixar WSDL de $url (Status: ${response.statusCode})');
+      }
 
-    return await parse(response.body, url);
+      return await parse(response.body, url);
+    } on http.ClientException catch (e) {
+      throw Exception('Erro de rede ao acessar o WSDL: $e');
+    } on Exception {
+      rethrow;
+
+    } catch (e) {
+      throw Exception('Ocorreu um erro inesperado ao carregar o WSDL: $e');
+    }
   }
+
+  Future<WsdlDefinition> parseFromContent(String xmlContent, String sourceName) async {
+    return await parse(xmlContent, sourceName);
+  }
+
 
   Future<WsdlDefinition> parse(String xmlContent, String sourceUrl) async {
     try {
@@ -156,7 +173,10 @@ class WsdlParserService {
 
       try {
         print('Baixando esquema importado: $absoluteUrl');
-        final response = await _client.get(Uri.parse(absoluteUrl));
+        final response = await _client
+            .get(Uri.parse(absoluteUrl))
+            .timeout(const Duration(seconds: 10));
+            
         if (response.statusCode == 200) {
           final doc = XmlDocument.parse(response.body);
           final root = doc.rootElement;
@@ -168,7 +188,9 @@ class WsdlParserService {
         }
       } catch (e) {
         print('Erro ao processar import $absoluteUrl: $e');
+        // Não jogamos erro aqui para não travar o parse todo se um XSD secundário falhar
       }
+
     }
   }
 

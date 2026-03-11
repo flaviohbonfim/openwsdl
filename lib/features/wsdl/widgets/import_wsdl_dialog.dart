@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:soap_lite/features/wsdl/wsdl_provider.dart';
+import 'package:openwsdl/features/wsdl/wsdl_provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ImportWsdlDialog extends StatefulWidget {
   const ImportWsdlDialog({super.key});
@@ -40,6 +42,36 @@ class _ImportWsdlDialogState extends State<ImportWsdlDialog> {
     }
   }
 
+  Future<void> _handleFileImport() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['wsdl', 'xml'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _isImporting = true;
+          _errorMessage = null;
+        });
+
+        final path = result.files.single.path!;
+        final file = File(path);
+        final content = await file.readAsString();
+
+        if (mounted) {
+          await context.read<WsdlProvider>().importWsdlFromContent(content, path);
+          if (mounted) Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isImporting = false;
+        _errorMessage = 'Erro ao ler arquivo: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -64,6 +96,20 @@ class _ImportWsdlDialogState extends State<ImportWsdlDialog> {
               style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ],
+          const SizedBox(height: 24),
+          const Text(
+            'OU',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _isImporting ? null : _handleFileImport,
+            icon: const Icon(Icons.file_open_outlined, size: 18),
+            label: const Text('IMPORTAR ARQUIVO LOCAL'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 45),
+            ),
+          ),
         ],
       ),
       actions: [

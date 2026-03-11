@@ -24,40 +24,66 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   final GlobalKey<MonacoEditorWidgetState> _editorKey =
       GlobalKey<MonacoEditorWidgetState>();
-  double _responsePanelHeight = 250;
+  double? _responsePanelHeight;
   bool _isResizing = false;
+
+  late final Map<ShortcutActivator, Intent> _editorShortcuts = {
+    const SingleActivator(LogicalKeyboardKey.keyT, control: true):
+        const _NewTabIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyW, control: true):
+        const _CloseTabIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyF, shift: true, alt: true):
+        const _FormatIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyS, control: true):
+        const _SaveIntent(),
+    const SingleActivator(LogicalKeyboardKey.enter, control: true):
+        const _ExecuteRequestIntent(),
+  };
 
   @override
   Widget build(BuildContext context) {
     final tabManager = context.watch<TabManager>();
     final activeTab = tabManager.activeTab;
 
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyT, control: true): () =>
-            tabManager.addTab(),
-        const SingleActivator(LogicalKeyboardKey.keyW, control: true): () {
+    final Map<Type, Action<Intent>> _editorActions = {
+      _NewTabIntent: CallbackAction<_NewTabIntent>(
+        onInvoke: (_) => tabManager.addTab(),
+      ),
+      _CloseTabIntent: CallbackAction<_CloseTabIntent>(
+        onInvoke: (_) {
           if (tabManager.activeTabIndex != -1) {
             tabManager.closeTab(tabManager.activeTabIndex);
           }
+          return null;
         },
-        const SingleActivator(LogicalKeyboardKey.keyF, shift: true, alt: true):
-            () => _editorKey.currentState?.format(),
-        const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
-            _showSaveDialog(context, activeTab),
-        const SingleActivator(LogicalKeyboardKey.enter, control: true): () {
+      ),
+      _FormatIntent: CallbackAction<_FormatIntent>(
+        onInvoke: (_) => _editorKey.currentState?.format(),
+      ),
+      _SaveIntent: CallbackAction<_SaveIntent>(
+        onInvoke: (_) => _showSaveDialog(context, activeTab),
+      ),
+      _ExecuteRequestIntent: CallbackAction<_ExecuteRequestIntent>(
+        onInvoke: (_) {
           final envProvider = context.read<EnvironmentProvider>();
           final historyProvider = context.read<HistoryProvider>();
           tabManager.executeSoapRequest(
             variables: envProvider.getActiveVariables(),
             historyProvider: historyProvider,
           );
+          return null;
         },
-      },
-      child: Focus(
-        autofocus: true,
-        child: Column(
-          children: [
+      ),
+    };
+
+    return Shortcuts(
+      shortcuts: _editorShortcuts,
+      child: Actions(
+        actions: _editorActions,
+        child: Focus(
+          autofocus: true,
+          child: Column(
+            children: [
             // Barra de Abas
             const AppTabBar(),
 
@@ -88,108 +114,121 @@ class _EditorScreenState extends State<EditorScreen> {
             Expanded(
               child: DefaultTabController(
                 length: 2,
-                child: Flex(
-                  direction: tabManager.isVerticalSplit
-                      ? Axis.horizontal
-                      : Axis.vertical,
-                  children: [
-                    // Área de Requisição
-                    Expanded(
-                      child: Column(
-                        children: [
-                          // Barra de Endereço (URL)
-                          if (activeTab != null)
-                            _UrlBar(
-                              url: activeTab.endpoint ?? '',
-                              onChanged: (val) => tabManager.updateActiveTabUrl(val),
-                              onSend: () {
-                                final envProvider = context.read<EnvironmentProvider>();
-                                final historyProvider = context.read<HistoryProvider>();
-                                tabManager.executeSoapRequest(
-                                  variables: envProvider.getActiveVariables(),
-                                  historyProvider: historyProvider,
-                                );
-                              },
-                              isExecuting: activeTab.isExecuting,
-                            ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Se a altura/largura não estiver definida, usa 50%
+                    if (_responsePanelHeight == null) {
+                      _responsePanelHeight = tabManager.isVerticalSplit 
+                          ? constraints.maxWidth / 2 
+                          : constraints.maxHeight / 2;
+                    }
 
-                          // Seletor de sub-abas da requisição
-                          if (activeTab != null)
-                            Container(
-                              height: 30,
-                              alignment: Alignment.centerLeft,
-                              decoration: BoxDecoration(
-                                border: Border(
-                                    bottom: BorderSide(
-                                        color: Theme.of(context)
-                                            .dividerColor
-                                            .withOpacity(0.1))),
-                              ),
-                              child: TabBar(
-                                isScrollable: true,
-                                dividerColor: Colors.transparent,
-                                indicatorWeight: 1,
-                                labelStyle: const TextStyle(
-                                    fontSize: 11, fontWeight: FontWeight.bold),
-                                unselectedLabelStyle:
-                                    const TextStyle(fontSize: 11),
-                                tabs: const [
-                                  Tab(text: 'CORPO'),
-                                  Tab(text: 'HEADERS'),
-                                ],
-                              ),
-                            ),
-
-                          // Conteúdo da Requisição (Corpo ou Headers)
-                          Expanded(
-                            child: Container(
-                              color: Theme.of(context).colorScheme.surface,
-                              child: activeTab == null
-                                  ? const Center(
-                                      child: Text(
-                                        'Nenhuma aba aberta.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                    )
-                                  : TabBarView(
-                                      children: [
-                                        MonacoEditorWidget(
-                                          key: _editorKey,
-                                          tab: activeTab,
+                    return Flex(
+                      direction: tabManager.isVerticalSplit
+                          ? Axis.horizontal
+                          : Axis.vertical,
+                      children: [
+                        // Área de Requisição
+                        Expanded(
+                          child: Column(
+                            children: [
+                              // Barra de Endereço (URL)
+                              if (activeTab != null)
+                                _UrlBar(
+                                  url: activeTab.endpoint ?? '',
+                                  onChanged: (val) => tabManager.updateActiveTabUrl(val),
+                                  onSend: () {
+                                    final envProvider = context.read<EnvironmentProvider>();
+                                    final historyProvider = context.read<HistoryProvider>();
+                                    tabManager.executeSoapRequest(
+                                      variables: envProvider.getActiveVariables(),
+                                      historyProvider: historyProvider,
+                                    );
+                                  },
+                                  isExecuting: activeTab.isExecuting,
+                                ),
+    
+                              // Seletor de sub-abas da requisição
+                              if (activeTab != null)
+                                Container(
+                                  height: 30,
+                                  alignment: Alignment.centerLeft,
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                        bottom: BorderSide(
+                                            color: Theme.of(context)
+                                                .dividerColor
+                                                .withOpacity(0.1))),
+                                  ),
+                                  child: TabBar(
+                                    isScrollable: true,
+                                    dividerColor: Colors.transparent,
+                                    indicatorWeight: 1,
+                                    labelStyle: const TextStyle(
+                                        fontSize: 11, fontWeight: FontWeight.bold),
+                                    unselectedLabelStyle:
+                                        const TextStyle(fontSize: 11),
+                                    tabs: const [
+                                      Tab(text: 'CORPO'),
+                                      Tab(text: 'HEADERS'),
+                                    ],
+                                  ),
+                                ),
+    
+                              // Conteúdo da Requisição (Corpo ou Headers)
+                              Expanded(
+                                child: Container(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  child: activeTab == null
+                                      ? const Center(
+                                          child: Text(
+                                            'Nenhuma aba aberta.',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(color: Colors.grey),
+                                          ),
+                                        )
+                                      : TabBarView(
+                                          children: [
+                                            MonacoEditorWidget(
+                                              key: _editorKey,
+                                              tab: activeTab,
+                                            ),
+                                            _RequestHeadersEditor(tab: activeTab),
+                                          ],
                                         ),
-                                        _RequestHeadersEditor(tab: activeTab),
-                                      ],
-                                    ),
-                            ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-
-                    // Divisor (Splitter)
-                    if (activeTab != null) _buildSplitter(tabManager),
-
-                    // Painel de Resposta
-                    if (activeTab != null)
-                      SizedBox(
-                        width: tabManager.isVerticalSplit
-                            ? _responsePanelHeight
-                            : double.infinity,
-                        height: tabManager.isVerticalSplit
-                            ? double.infinity
-                            : _responsePanelHeight,
-                        child: const ResponsePanel(),
-                      ),
-                  ],
+                        ),
+    
+                        // Divisor (Splitter)
+                        if (activeTab != null) _buildSplitter(tabManager),
+    
+                        // Painel de Resposta
+                        if (activeTab != null)
+                          SizedBox(
+                            width: tabManager.isVerticalSplit
+                                ? _responsePanelHeight
+                                : double.infinity,
+                            height: tabManager.isVerticalSplit
+                                ? double.infinity
+                                : _responsePanelHeight,
+                            child: const ResponsePanel(),
+                          ),
+                      ],
+                    );
+                  }
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
 
   void _showSaveDialog(BuildContext context, TabEditorState? tab) {
     if (tab == null) return;
@@ -304,11 +343,11 @@ class _EditorScreenState extends State<EditorScreen> {
         onPanUpdate: (details) {
           setState(() {
             if (isVertical) {
-              _responsePanelHeight = (_responsePanelHeight - details.delta.dx)
-                  .clamp(100.0, 800.0);
+              _responsePanelHeight = ((_responsePanelHeight ?? 250) - details.delta.dx)
+                  .clamp(100.0, 1200.0);
             } else {
-              _responsePanelHeight = (_responsePanelHeight - details.delta.dy)
-                  .clamp(100.0, 600.0);
+              _responsePanelHeight = ((_responsePanelHeight ?? 250) - details.delta.dy)
+                  .clamp(100.0, 800.0);
             }
           });
         },
@@ -571,3 +610,24 @@ class _HeaderRow extends StatelessWidget {
     );
   }
 }
+
+class _NewTabIntent extends Intent {
+  const _NewTabIntent();
+}
+
+class _CloseTabIntent extends Intent {
+  const _CloseTabIntent();
+}
+
+class _FormatIntent extends Intent {
+  const _FormatIntent();
+}
+
+class _SaveIntent extends Intent {
+  const _SaveIntent();
+}
+
+class _ExecuteRequestIntent extends Intent {
+  const _ExecuteRequestIntent();
+}
+
