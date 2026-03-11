@@ -40,13 +40,16 @@ jobs:
         run: |
           flutter build windows --release
           dart run msix:create
+          mkdir dist
+          mv *.msix dist/
 
       - name: Build macOS
         if: matrix.target == 'macos'
         run: |
           flutter build macos --release
+          mkdir dist
           cd build/macos/Build/Products/Release
-          zip -r ../../../../openwsdl-macos.zip OpenWsdl.app
+          zip -r ../../../../../dist/openwsdl-macos.zip OpenWsdl.app
 
       - name: Build Linux
         if: matrix.target == 'linux'
@@ -54,17 +57,16 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y libgtk-3-dev libblkid-dev liblzma-dev
           flutter build linux --release
+          mkdir dist
           cd build/linux/x64/release/bundle
-          zip -r ../../../../../openwsdl-linux.zip *
+          zip -r ../../../../../dist/openwsdl-linux.zip *
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}-artifact
-          path: |
-            build/windows/runner/Release/*.msix
-            openwsdl-macos.zip
-            openwsdl-linux.zip
+          path: dist/
+          if-no-files-found: error
 
   release:
     needs: build
