@@ -8,7 +8,5 @@
 PRODUCT_NAME = openwsdl
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.openwsdl
-
-// The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_BUNDLE_IDENTIFIER = com.flaviobonfim.openwsdl
+PRODUCT_COPYRIGHT = Copyright © 2026 Flávio Henrique Bonfim. All rights reserved.
