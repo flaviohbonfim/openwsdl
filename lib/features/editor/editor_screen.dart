@@ -29,15 +29,15 @@ class _EditorScreenState extends State<EditorScreen> {
 
   late final Map<ShortcutActivator, Intent> _editorShortcuts = {
     const SingleActivator(LogicalKeyboardKey.keyT, control: true):
-        const _NewTabIntent(),
+        const NewTabIntent(),
     const SingleActivator(LogicalKeyboardKey.keyW, control: true):
-        const _CloseTabIntent(),
+        const CloseTabIntent(),
     const SingleActivator(LogicalKeyboardKey.keyF, shift: true, alt: true):
-        const _FormatIntent(),
+        const FormatIntent(),
     const SingleActivator(LogicalKeyboardKey.keyS, control: true):
-        const _SaveIntent(),
+        const SaveIntent(),
     const SingleActivator(LogicalKeyboardKey.enter, control: true):
-        const _ExecuteRequestIntent(),
+        const ExecuteRequestIntent(),
   };
 
   @override
@@ -46,10 +46,10 @@ class _EditorScreenState extends State<EditorScreen> {
     final activeTab = tabManager.activeTab;
 
     final Map<Type, Action<Intent>> _editorActions = {
-      _NewTabIntent: CallbackAction<_NewTabIntent>(
+      NewTabIntent: CallbackAction<NewTabIntent>(
         onInvoke: (_) => tabManager.addTab(),
       ),
-      _CloseTabIntent: CallbackAction<_CloseTabIntent>(
+      CloseTabIntent: CallbackAction<CloseTabIntent>(
         onInvoke: (_) {
           if (tabManager.activeTabIndex != -1) {
             tabManager.closeTab(tabManager.activeTabIndex);
@@ -57,13 +57,13 @@ class _EditorScreenState extends State<EditorScreen> {
           return null;
         },
       ),
-      _FormatIntent: CallbackAction<_FormatIntent>(
+      FormatIntent: CallbackAction<FormatIntent>(
         onInvoke: (_) => _editorKey.currentState?.format(),
       ),
-      _SaveIntent: CallbackAction<_SaveIntent>(
+      SaveIntent: CallbackAction<SaveIntent>(
         onInvoke: (_) => _showSaveDialog(context, activeTab),
       ),
-      _ExecuteRequestIntent: CallbackAction<_ExecuteRequestIntent>(
+      ExecuteRequestIntent: CallbackAction<ExecuteRequestIntent>(
         onInvoke: (_) {
           final envProvider = context.read<EnvironmentProvider>();
           final historyProvider = context.read<HistoryProvider>();
@@ -233,8 +233,61 @@ class _EditorScreenState extends State<EditorScreen> {
   void _showSaveDialog(BuildContext context, TabEditorState? tab) {
     if (tab == null) return;
 
-    final nameController = TextEditingController(text: tab.title);
     final collectionProvider = context.read<CollectionProvider>();
+    final tabManager = context.read<TabManager>();
+
+    // Se já tiver ID, salva direto (sobrescreve)
+    if (tab.savedRequestId != null) {
+      final request = SavedRequest(
+        id: tab.savedRequestId,
+        name: tab.title,
+        url: tab.endpoint ?? '',
+        body: tab.content,
+        soapAction: tab.soapAction,
+        headers: Map<String, String>.from(tab.customHeaders),
+      );
+
+      // Procurar em qual coleção/pasta esta requisição está para manter o local
+      // Como o CollectionProvider.addSavedRequest já lida com o ID globalmente se não passarmos folderId, 
+      // mas precisamos saber se ela estava em uma pasta.
+      // Por enquanto, vamos simplificar: o addSavedRequest no provider já busca pelo ID.
+      // No entanto, o SavedRequest sozinho não sabe sua coleção.
+      
+      // Vamos iterar para achar a coleção correta
+      String? foundCollectionId;
+      String? foundFolderId;
+      
+      for (var col in collectionProvider.collections) {
+        if (col.requests.any((r) => r.id == tab.savedRequestId)) {
+          foundCollectionId = col.id;
+          break;
+        }
+        for (var folder in col.folders) {
+          if (folder.requests.any((r) => r.id == tab.savedRequestId)) {
+            foundCollectionId = col.id;
+            foundFolderId = folder.id;
+            break;
+          }
+        }
+        if (foundCollectionId != null) break;
+      }
+
+      if (foundCollectionId != null) {
+        collectionProvider.addSavedRequest(
+          foundCollectionId,
+          request,
+          folderId: foundFolderId,
+        );
+        tabManager.clearActiveTabModified();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Alterações salvas!'), duration: Duration(seconds: 1)),
+        );
+        return;
+      }
+    }
+
+    // Caso contrário, mostra o modal
+    final nameController = TextEditingController(text: tab.title);
     final collections = collectionProvider.collections;
 
     if (collections.isEmpty) {
@@ -309,6 +362,7 @@ class _EditorScreenState extends State<EditorScreen> {
             ElevatedButton(
               onPressed: () {
                 final request = SavedRequest(
+                  id: tab.savedRequestId,
                   name: nameController.text,
                   url: tab.endpoint ?? '',
                   body: tab.content,
@@ -320,6 +374,15 @@ class _EditorScreenState extends State<EditorScreen> {
                   request,
                   folderId: selectedFolderId,
                 );
+                
+                // Atualizar o título da aba se mudou
+                tab.title = nameController.text;
+                // Se era uma nova requisição, agora ela tem um ID (o addSavedRequest não gera novo ID se já tiver, mas aqui pode ser nulo se for a primeira vez)
+                // Na verdade o SavedRequest gera um ID no construtor se id for nulo.
+                tab.savedRequestId = request.id;
+                
+                tabManager.clearActiveTabModified();
+                
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Salvo com sucesso!')),
@@ -611,23 +674,23 @@ class _HeaderRow extends StatelessWidget {
   }
 }
 
-class _NewTabIntent extends Intent {
-  const _NewTabIntent();
+class NewTabIntent extends Intent {
+  const NewTabIntent();
 }
 
-class _CloseTabIntent extends Intent {
-  const _CloseTabIntent();
+class CloseTabIntent extends Intent {
+  const CloseTabIntent();
 }
 
-class _FormatIntent extends Intent {
-  const _FormatIntent();
+class FormatIntent extends Intent {
+  const FormatIntent();
 }
 
-class _SaveIntent extends Intent {
-  const _SaveIntent();
+class SaveIntent extends Intent {
+  const SaveIntent();
 }
 
-class _ExecuteRequestIntent extends Intent {
-  const _ExecuteRequestIntent();
+class ExecuteRequestIntent extends Intent {
+  const ExecuteRequestIntent();
 }
 

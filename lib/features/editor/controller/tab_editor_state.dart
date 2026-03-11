@@ -15,6 +15,7 @@ class TabEditorState {
   Map<String, String> customHeaders;
   SoapResponse? lastResponse;
   bool isExecuting;
+  String? savedRequestId; // ID da requisição se ela vier de uma coleção
 
   TabEditorState({
     required this.id,
@@ -27,6 +28,7 @@ class TabEditorState {
     Map<String, String>? customHeaders,
     this.lastResponse,
     this.isExecuting = false,
+    this.savedRequestId,
   }) : customHeaders = customHeaders ?? {};
 
   TabEditorState copyWith({
@@ -40,6 +42,7 @@ class TabEditorState {
     Map<String, String>? customHeaders,
     SoapResponse? lastResponse,
     bool? isExecuting,
+    String? savedRequestId,
   }) {
     return TabEditorState(
       id: id ?? this.id,
@@ -52,6 +55,7 @@ class TabEditorState {
       customHeaders: customHeaders ?? this.customHeaders,
       lastResponse: lastResponse ?? this.lastResponse,
       isExecuting: isExecuting ?? this.isExecuting,
+      savedRequestId: savedRequestId ?? this.savedRequestId,
     );
   }
 }

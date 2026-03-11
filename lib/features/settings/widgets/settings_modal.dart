@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../config/theme/theme_provider.dart';
 import '../../history/controller/history_provider.dart';
+import 'shortcut_details_modal.dart';
 
 class SettingsModal extends StatelessWidget {
   const SettingsModal({super.key});
@@ -35,16 +35,17 @@ class SettingsModal extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
-                  _buildSection(context, 'Geral'),
                   ListTile(
-                    title: const Text('Tema'),
-                    subtitle: const Text('Alternar entre modo claro e escuro'),
-                    trailing: Consumer<ThemeProvider>(
-                      builder: (context, theme, _) => Switch(
-                        value: theme.isDarkMode,
-                        onChanged: (_) => theme.toggleTheme(),
-                      ),
-                    ),
+                    leading: const Icon(Icons.keyboard),
+                    title: const Text('Atalhos de Teclado'),
+                    subtitle: const Text('Visualizar e customizar atalhos'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const ShortcutDetailsModal(),
+                      );
+                    },
                   ),
                   const Divider(),
                   _buildSection(context, 'Dados e Armazenamento'),

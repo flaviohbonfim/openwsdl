@@ -38,6 +38,7 @@ class TabManager extends ChangeNotifier {
     String? endpoint,
     String? soapAction,
     Map<String, String>? customHeaders,
+    String? savedRequestId,
   }) {
     final newId = DateTime.now().millisecondsSinceEpoch.toString();
     final newTab = TabEditorState(
@@ -48,6 +49,7 @@ class TabManager extends ChangeNotifier {
       endpoint: endpoint,
       soapAction: soapAction,
       customHeaders: customHeaders ?? {},
+      savedRequestId: savedRequestId,
     );
     _tabs.add(newTab);
     _activeTabIndex = _tabs.length - 1;
@@ -61,6 +63,7 @@ class TabManager extends ChangeNotifier {
       endpoint: request.url,
       soapAction: request.soapAction,
       customHeaders: request.headers,
+      savedRequestId: request.id,
     );
   }
 
@@ -99,6 +102,13 @@ class TabManager extends ChangeNotifier {
     if (activeTab != null) {
       activeTab!.endpoint = url;
       activeTab!.isModified = true;
+      notifyListeners();
+    }
+  }
+
+  void clearActiveTabModified() {
+    if (activeTab != null) {
+      activeTab!.isModified = false;
       notifyListeners();
     }
   }

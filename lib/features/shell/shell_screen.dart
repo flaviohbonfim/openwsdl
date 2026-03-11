@@ -26,101 +26,140 @@ class _ShellScreenState extends State<ShellScreen> {
   double _sidebarWidth = 250;
   bool _isResizing = false;
 
-  final Map<ShortcutActivator, Intent> _shortcuts = {
-    const SingleActivator(LogicalKeyboardKey.keyB, control: true): 
-        const _ToggleSidebarIntent(),
-    const SingleActivator(LogicalKeyboardKey.keyT, control: true, shift: true): 
-        const _ToggleThemeIntent(),
-  };
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleGlobalKeys);
+  }
 
-  late final Map<Type, Action<Intent>> _actions = {
-    _ToggleSidebarIntent: CallbackAction<_ToggleSidebarIntent>(
-      onInvoke: (_) => setState(() => _isSidebarVisible = !_isSidebarVisible),
-    ),
-    _ToggleThemeIntent: CallbackAction<_ToggleThemeIntent>(
-      onInvoke: (_) => context.read<ThemeProvider>().toggleTheme(),
-    ),
-  };
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleGlobalKeys);
+    super.dispose();
+  }
+
+  bool _handleGlobalKeys(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      final isControlPressed = HardwareKeyboard.instance.isControlPressed;
+      final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
+      final isAltPressed = HardwareKeyboard.instance.isAltPressed;
+
+      // Ctrl + B (Toggle Sidebar)
+      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyB) {
+        setState(() => _isSidebarVisible = !_isSidebarVisible);
+        return true;
+      }
+
+      // Ctrl + Shift + T (Toggle Theme) - Corrigi o atalho de acordo com o plano original
+      if (isControlPressed && isShiftPressed && event.logicalKey == LogicalKeyboardKey.keyT) {
+        context.read<ThemeProvider>().toggleTheme();
+        return true;
+      }
+      
+      // Atalhos do Editor delegados via Actions para o EditorScreen
+      // Ctrl + S
+      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyS) {
+        Actions.maybeInvoke(context, const SaveIntent());
+        return true;
+      }
+
+      // Ctrl + Enter
+      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.enter) {
+        Actions.maybeInvoke(context, const ExecuteRequestIntent());
+        return true;
+      }
+
+      // Ctrl + T (Nova Aba)
+      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyT && !isShiftPressed) {
+        Actions.maybeInvoke(context, const NewTabIntent());
+        return true;
+      }
+
+      // Ctrl + W (Fechar Aba)
+      if (isControlPressed && event.logicalKey == LogicalKeyboardKey.keyW) {
+        Actions.maybeInvoke(context, const CloseTabIntent());
+        return true;
+      }
+
+      // Shift + Alt + F (Formatar)
+      if (isShiftPressed && isAltPressed && event.logicalKey == LogicalKeyboardKey.keyF) {
+        Actions.maybeInvoke(context, const FormatIntent());
+        return true;
+      }
+    }
+    return false;
+  }
   
   @override
   Widget build(BuildContext context) {
-    return Shortcuts(
-      shortcuts: _shortcuts,
-      child: Actions(
-        actions: _actions,
-        child: Focus(
-          autofocus: true,
-          child: Scaffold(
-            body: Row(
+    return Scaffold(
+      body: Row(
+        children: [
+          // NavigationRail
+          AppNavigationRail(
+            selectedIndex: _selectedNavIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                if (_selectedNavIndex == index) {
+                  _isSidebarVisible = !_isSidebarVisible;
+                } else {
+                  _selectedNavIndex = index;
+                  _isSidebarVisible = true;
+                }
+              });
+            },
+          ),
+          
+          // Sidebar redimensionável
+          if (_isSidebarVisible) ...[
+            Sidebar(
+              selectedIndex: _selectedNavIndex,
+              width: _sidebarWidth,
+            ),
+            // Divisor redimensionável
+            MouseRegion(
+              cursor: SystemMouseCursors.resizeLeftRight,
+              child: GestureDetector(
+                onHorizontalDragStart: (details) {
+                  setState(() => _isResizing = true);
+                },
+                onHorizontalDragUpdate: (details) {
+                  setState(() {
+                    _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(150.0, 400.0);
+                  });
+                },
+                onHorizontalDragEnd: (details) {
+                  setState(() => _isResizing = false);
+                },
+                child: Container(
+                  width: 4,
+                  color: _isResizing 
+                      ? Theme.of(context).colorScheme.primary 
+                      : Colors.transparent,
+                  child: Container(
+                    width: 1,
+                    color: Theme.of(context).dividerColor,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          
+          // Área Principal (Editor + Status Bar)
+          Expanded(
+            child: Column(
               children: [
-                // NavigationRail
-                AppNavigationRail(
-                  selectedIndex: _selectedNavIndex,
-                  onDestinationSelected: (index) {
-                    setState(() {
-                      if (_selectedNavIndex == index) {
-                        _isSidebarVisible = !_isSidebarVisible;
-                      } else {
-                        _selectedNavIndex = index;
-                        _isSidebarVisible = true;
-                      }
-                    });
-                  },
-                ),
-                
-                // Sidebar redimensionável
-                if (_isSidebarVisible) ...[
-                  Sidebar(
-                    selectedIndex: _selectedNavIndex,
-                    width: _sidebarWidth,
-                  ),
-                  // Divisor redimensionável
-                  MouseRegion(
-                    cursor: SystemMouseCursors.resizeLeftRight,
-                    child: GestureDetector(
-                      onHorizontalDragStart: (details) {
-                        setState(() => _isResizing = true);
-                      },
-                      onHorizontalDragUpdate: (details) {
-                        setState(() {
-                          _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(150.0, 400.0);
-                        });
-                      },
-                      onHorizontalDragEnd: (details) {
-                        setState(() => _isResizing = false);
-                      },
-                      child: Container(
-                        width: 4,
-                        color: _isResizing 
-                            ? Theme.of(context).colorScheme.primary 
-                            : Colors.transparent,
-                        child: Container(
-                          width: 1,
-                          color: Theme.of(context).dividerColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                
-                // Área Principal (Editor + Status Bar)
+                // Área do Editor
                 Expanded(
-                  child: Column(
-                    children: [
-                      // Área do Editor
-                      Expanded(
-                        child: _buildEditorArea(),
-                      ),
-                      
-                      // Barra de Status
-                      const StatusBar(),
-                    ],
-                  ),
+                  child: _buildEditorArea(),
                 ),
+                
+                // Barra de Status
+                const StatusBar(),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -130,11 +169,4 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 }
 
-class _ToggleSidebarIntent extends Intent {
-  const _ToggleSidebarIntent();
-}
-
-class _ToggleThemeIntent extends Intent {
-  const _ToggleThemeIntent();
-}
 

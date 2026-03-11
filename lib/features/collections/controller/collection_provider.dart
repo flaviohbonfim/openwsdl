@@ -56,10 +56,22 @@ class CollectionProvider extends ChangeNotifier {
     if (collection == null) return;
 
     if (folderId == null) {
-      collection.requests.add(request);
+      final index = collection.requests.indexWhere((r) => r.id == request.id);
+      if (index != -1) {
+        collection.requests[index] = request;
+      } else {
+        collection.requests.add(request);
+      }
     } else {
       final folder = _findFolder(collection.folders, folderId);
-      folder?.requests.add(request);
+      if (folder != null) {
+        final index = folder.requests.indexWhere((r) => r.id == request.id);
+        if (index != -1) {
+          folder.requests[index] = request;
+        } else {
+          folder.requests.add(request);
+        }
+      }
     }
     saveCollections();
     notifyListeners();
