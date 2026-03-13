@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenWsdl - Cliente SOAP Moderno e Veloz</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Cliente SOAP desktop cross-platform leve, rápido e moderno. Alternativa open-source ao SoapUI focada em performance.">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <img src="https://i.ibb.co/H1DbPgj/logo-openwsdl.png" alt="OpenWsdl Logo">
+                <span>OpenWsdl</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">Funcionalidades</a></li>
+                <li><a href="#install">Instalação</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="https://github.com/flaviohbonfim/openwsdl" class="btn-github">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1>O futuro do teste SOAP é <span class="gradient-text">leve e moderno</span>.</h1>
+            <p class="subtitle">Um cliente desktop cross-platform focado em performance, com inicialização ultra-rápida e interface intuitiva.</p>
+            <div class="hero-btns">
+                <a href="https://github.com/flaviohbonfim/openwsdl/releases" class="btn-primary">Baixar Versão 1.0.0</a>
+                <a href="#install" class="btn-secondary">Ver Guia de Instalação</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Por que OpenWsdl?</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="icon">🚀</div>
+                    <h3>Alta Performance</h3>
+                    <p>Menos de 150MB de RAM em repouso e inicialização em menos de 1.5 segundos.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">⚡</div>
+                    <h3>Editor Monaco</h3>
+                    <p>O mesmo motor do VS Code para edição de XML com syntax highlighting e atalhos globais.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🔍</div>
+                    <h3>Parser Robusto</h3>
+                    <p>Suporte completo a WSDL 1.1/1.2 com recursão de XSD e geração de envelopes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">📦</div>
+                    <h3>Cross-Platform</h3>
+                    <p>Binários nativos para Windows, macOS e Linux sem a lentidão do Java.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="install" class="install-guide">
+        <div class="container">
+            <h2 class="section-title">Como Instalar</h2>
+            <div class="install-tabs">
+                <div class="install-content">
+                    <h3>🖥️ Desktop</h3>
+                    <p>Acesse a nossa página de <a href="https://github.com/flaviohbonfim/openwsdl/releases">Releases</a> e baixe o instalador para o seu sistema.</p>
+                    <div class="platform-notes">
+                        <h4>Apple macOS</h4>
+                        <p>Como o projeto é open-source, você precisará autorizar a abertura:</p>
+                        <ol>
+                            <li>Clique com o <strong>botão direito</strong> no app e selecione "Abrir".</li>
+                            <li>No aviso, clique em "Abrir" novamente.</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="install-content">
+                    <h3>🛠️ Desenvolvedores</h3>
+                    <code>git clone https://github.com/flaviohbonfim/openwsdl.git<br>
+                    cd openwsdl<br>
+                    flutter pub get<br>
+                    flutter run -d windows</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="changelog" class="changelog">
+        <div class="container">
+            <h2 class="section-title">Changelog v1.0.0</h2>
+            <ul class="changelog-list">
+                <li>✅ Otimização de inicialização assíncrona paralela.</li>
+                <li>✅ Shell visual estilo VS Code com Sidebar redimensionável.</li>
+                <li>✅ Geração automática de templates de envelope SOAP.</li>
+                <li>✅ Sistema de persistência local para Coleções e Histórico.</li>
+                <li>✅ Importação de sessões do Postman.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="roadmap" class="roadmap">
+        <div class="container">
+            <h2 class="section-title">O que vem por aí (v2.0)</h2>
+            <div class="roadmap-items">
+                <div class="roadmap-item">Suporte a autenticação WS-Security (UsernameToken).</div>
+                <div class="roadmap-item">Visualizador gráfico de esquemas XSD.</div>
+                <div class="roadmap-item">Extensibilidade via plugins Javascript.</div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 OpenWsdl. Distribuído sob a Licença MIT.</p>
+            <p>Criado por <a href="https://github.com/flaviohbonfim">Flavio Bonfim</a></p>
+        </div>
+    </footer>
+</body>
+</html>
