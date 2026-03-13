@@ -17,12 +17,15 @@ jobs:
           - target: windows
             os: windows-latest
             artifact_name: openwsdl-windows.msix
+            flutter_channel: stable
           - target: macos
             os: macos-latest
             artifact_name: openwsdl-macos.zip
+            flutter_channel: master   # necessário para compatibilidade com macOS 26
           - target: linux
             os: ubuntu-latest
             artifact_name: openwsdl-linux.zip
+            flutter_channel: stable
 
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +33,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: ${{ matrix.flutter_channel }}
 
       - name: Install dependencies
         run: flutter pub get
@@ -43,14 +46,22 @@ jobs:
           mkdir dist
           copy build\windows\x64\runner\Release\*.msix dist\
 
+      - name: Install CocoaPods
+        if: matrix.target == 'macos'
+        run: sudo gem install cocoapods
+
       - name: Build macOS
         if: matrix.target == 'macos'
         run: |
+          cd macos && pod install && cd ..
           flutter build macos --release
           mkdir dist
           cd build/macos/Build/Products/Release
-          codesign --force --deep -s - OpenWsdl.app
-          zip -ry ../../../../../dist/openwsdl-macos.zip OpenWsdl.app
+          # Ad-hoc signing para distribuição sem Apple Developer account
+          codesign --force --deep --sign - openwsdl.app
+          # Remove quarentena antes de zipar
+          xattr -rc openwsdl.app
+          zip -ry ../../../../../dist/openwsdl-macos.zip openwsdl.app
 
       - name: Build Linux
         if: matrix.target == 'linux'
