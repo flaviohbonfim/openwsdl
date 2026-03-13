@@ -3,7 +3,7 @@ name: Release OpenWsdl
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build:
@@ -17,27 +17,41 @@ jobs:
           - target: windows
             os: windows-latest
             artifact_name: openwsdl-windows.msix
-            flutter_channel: stable
           - target: macos
             os: macos-latest
             artifact_name: openwsdl-macos.zip
-            flutter_channel: master   # necessário para compatibilidade com macOS 26
           - target: linux
             os: ubuntu-latest
             artifact_name: openwsdl-linux.zip
-            flutter_channel: stable
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Flutter
+      # ── Windows / Linux: usa Flutter stable via action ──────────────────────
+      - name: Setup Flutter (stable)
+        if: matrix.target != 'macos'
         uses: subosito/flutter-action@v2
         with:
-          channel: ${{ matrix.flutter_channel }}
+          channel: stable
+          cache: true
+
+      # ── macOS: instala Flutter master manualmente (fix para macOS 26 Tahoe) ─
+      # O subosito/flutter-action serve cache do engine stable mesmo quando
+      # channel=master, fazendo o app crashar no macOS 26. A instalação manual
+      # garante que o engine correto seja baixado.
+      - name: Setup Flutter (master — macOS 26 compatibility)
+        if: matrix.target == 'macos'
+        run: |
+          git clone https://github.com/flutter/flutter.git \
+            --branch master --depth 1 $HOME/flutter-master
+          echo "$HOME/flutter-master/bin" >> $GITHUB_PATH
+          $HOME/flutter-master/bin/flutter --version
+          $HOME/flutter-master/bin/flutter precache --macos
 
       - name: Install dependencies
         run: flutter pub get
 
+      # ── Windows ──────────────────────────────────────────────────────────────
       - name: Build Windows
         if: matrix.target == 'windows'
         run: |
@@ -46,6 +60,7 @@ jobs:
           mkdir dist
           copy build\windows\x64\runner\Release\*.msix dist\
 
+      # ── macOS ────────────────────────────────────────────────────────────────
       - name: Install CocoaPods
         if: matrix.target == 'macos'
         run: sudo gem install cocoapods
@@ -57,12 +72,22 @@ jobs:
           flutter build macos --release
           mkdir dist
           cd build/macos/Build/Products/Release
-          # Ad-hoc signing para distribuição sem Apple Developer account
           codesign --force --deep --sign - openwsdl.app
-          # Remove quarentena antes de zipar
           xattr -rc openwsdl.app
           zip -ry ../../../../../dist/openwsdl-macos.zip openwsdl.app
 
+      # Verifica que o engine do build é diferente do stable (4c4c44bd)
+      # Se o UUID ainda for 4c4c44bd o fix ainda não chegou ao master
+      - name: Verify FlutterMacOS engine UUID
+        if: matrix.target == 'macos'
+        run: |
+          echo "=== FlutterMacOS engine UUID ==="
+          dwarfdump --uuid \
+            build/macos/Build/Products/Release/openwsdl.app/Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS \
+            | grep arm64
+          echo "Expected: NOT 4c4c44bd-5555-3144-a133-915cc616219a"
+
+      # ── Linux ────────────────────────────────────────────────────────────────
       - name: Build Linux
         if: matrix.target == 'linux'
         run: |
@@ -73,6 +98,7 @@ jobs:
           cd build/linux/x64/release/bundle
           zip -r ../../../../../dist/openwsdl-linux.zip *
 
+      # ── Upload ───────────────────────────────────────────────────────────────
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -80,6 +106,7 @@ jobs:
           path: dist/
           if-no-files-found: error
 
+  # ── Release ──────────────────────────────────────────────────────────────────
   release:
     needs: build
     runs-on: ubuntu-latest
