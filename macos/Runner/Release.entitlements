@@ -2,20 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Sandbox obrigatório -->
     <key>com.apple.security.app-sandbox</key>
     <true/>
 
-    <!-- Rede de saída (pacote http, url_launcher) -->
+    <!-- CRÍTICO: WKWebView (flutter_monaco) precisa disso para JS JIT em release -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- Necessário para o WebView carregar conteúdo local -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- Rede (pacote http) -->
     <key>com.apple.security.network.client</key>
     <true/>
 
-    <!-- Leitura e escrita de arquivos escolhidos pelo usuário (file_picker) -->
+    <!-- file_picker -->
     <key>com.apple.security.files.user-selected.read-write</key>
-    <true/>
-
-    <!-- Acesso a Downloads (opcional, mas útil para file_picker) -->
-    <key>com.apple.security.files.downloads.read-write</key>
     <true/>
 </dict>
 </plist>
