@@ -72,7 +72,10 @@ jobs:
           flutter build macos --release
           mkdir dist
           cd build/macos/Build/Products/Release
-          codesign --force --deep --sign - openwsdl.app
+          # Re-assina preservando os entitlements do Release.entitlements
+          codesign --force --deep --sign - \
+            --entitlements "$GITHUB_WORKSPACE/macos/Runner/Release.entitlements" \
+            openwsdl.app
           xattr -rc openwsdl.app
           zip -ry ../../../../../dist/openwsdl-macos.zip openwsdl.app
 
